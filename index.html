@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Lens&Luxe - Fashion Blog showcasing style, trends, and luxury living">
+    <title>Lens&Luxe - Fashion & Lifestyle Blog</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Lens&Luxe</div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#blog" class="nav-link">Blog</a></li>
+                <li><a href="#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Welcome to Lens&Luxe</h1>
+            <p>Capturing Style, Celebrating Elegance</p>
+            <a href="#blog" class="cta-button">Explore Our Stories</a>
+        </div>
+    </section>
+
+    <!-- Featured Posts Section -->
+    <section id="blog" class="featured-posts">
+        <div class="container">
+            <h2>Featured Stories</h2>
+            
+            <div class="posts-grid">
+                <!-- Post 1 -->
+                <article class="post-card">
+                    <div class="post-image" style="background: linear-gradient(135deg, #800020 0%, #a0003a 100%);"></div>
+                    <div class="post-content">
+                        <span class="post-date">March 15, 2026</span>
+                        <h3>Spring Elegance: The New Burgundy Trend</h3>
+                        <p>Discover how burgundy is dominating this spring's fashion landscape. From haute couture runways to street style, explore the versatility of this luxurious hue.</p>
+                        <a href="#" class="read-more">Read More →</a>
+                    </div>
+                </article>
+
+                <!-- Post 2 -->
+                <article class="post-card">
+                    <div class="post-image" style="background: linear-gradient(135deg, #fffef9 0%, #f5f5f0 100%);"></div>
+                    <div class="post-content">
+                        <span class="post-date">March 12, 2026</span>
+                        <h3>Minimalist Chic: Ivory Essentials</h3>
+                        <p>Build your capsule wardrobe with timeless ivory pieces. Learn how to style these versatile staples for any occasion, from casual to formal events.</p>
+                        <a href="#" class="read-more">Read More →</a>
+                    </div>
+                </article>
+
+                <!-- Post 3 -->
+                <article class="post-card">
+                    <div class="post-image" style="background: linear-gradient(135deg, #800020 0%, #fffef9 100%);"></div>
+                    <div class="post-content">
+                        <span class="post-date">March 10, 2026</span>
+                        <h3>Luxury Pairing: Burgundy Meets Ivory</h3>
+                        <p>Master the art of combining two classic colors. This comprehensive guide shows you how to create stunning outfits by pairing burgundy and ivory pieces.</p>
+                        <a href="#" class="read-more">Read More →</a>
+                    </div>
+                </article>
+
+                <!-- Post 4 -->
+                <article class="post-card">
+                    <div class="post-image" style="background: linear-gradient(135deg, #a0003a 0%, #fffef9 100%);"></div>
+                    <div class="post-content">
+                        <span class="post-date">March 8, 2026</span>
+                        <h3>Accessories Review: Designer Picks</h3>
+                        <p>Our curated selection of luxury accessories that will elevate any wardrobe. Find out which pieces are worth the investment this season.</p>
+                        <a href="#" class="read-more">Read More →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery">
+        <div class="container">
+            <h2>Style Gallery</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item" style="background: linear-gradient(135deg, #800020 0%, #400010 100%);"></div>
+                <div class="gallery-item" style="background: linear-gradient(135deg, #fffef9 0%, #fffaf0 100%);"></div>
+                <div class="gallery-item" style="background: linear-gradient(135deg, #c41e3a 0%, #800020 100%);"></div>
+                <div class="gallery-item" style="background: linear-gradient(135deg, #f5f5f0 0%, #fffef9 100%);"></div>
+                <div class="gallery-item" style="background: linear-gradient(135deg, #800020 0%, #fffef9 100%);"></div>
+                <div class="gallery-item" style="background: linear-gradient(135deg, #2a0010 0%, #a0003a 100%);"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <h2>About Lens&Luxe</h2>
+                <p>Lens&Luxe is a premier fashion and lifestyle blog dedicated to exploring the intersections of style, culture, and luxury. Through stunning visuals and thoughtful narratives, we celebrate the art of fashion and inspire our readers to embrace their unique aesthetic.</p>
+                <p>Our mission is to provide authentic fashion insights, trend analysis, and curated content for the modern luxury enthusiast. Whether you're seeking styling inspiration or industry insights, Lens&Luxe is your destination for refined taste and elegant living.</p>
+                <div class="about-stats">
+                    <div class="stat">
+                        <h3>500+</h3>
+                        <p>Articles Published</p>
+                    </div>
+                    <div class="stat">
+                        <h3>50K+</h3>
+                        <p>Monthly Readers</p>
+                    </div>
+                    <div class="stat">
+                        <h3>15+</h3>
+                        <p>Years of Expertise</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="container">
+            <h2>Stay Updated</h2>
+            <p>Subscribe to our newsletter for exclusive fashion tips and trend updates</p>
+            <form class="newsletter-form" onsubmit="handleSubscribe(event)">
+                <input type="email" placeholder="Enter your email" required>
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Get In Touch</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3>Contact Us</h3>
+                    <p><strong>Email:</strong> hello@lensandluxe.com</p>
+                    <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                    <p><strong>Address:</strong> New York, NY 10001</p>
+                </div>
+                <form class="contact-form" onsubmit="handleContact(event)">
+                    <input type="text" placeholder="Your Name" required>
+                    <input type="email" placeholder="Your Email" required>
+                    <textarea placeholder="Your Message" rows="5" required></textarea>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Lens&Luxe</h4>
+                    <p>Your destination for fashion, style, and luxury living.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="#gallery">Gallery</a></li>
+                        <li><a href="#about">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link">Instagram</a>
+                        <a href="#" class="social-link">Pinterest</a>
+                        <a href="#" class="social-link">Twitter</a>
+                        <a href="#" class="social-link">Facebook</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
