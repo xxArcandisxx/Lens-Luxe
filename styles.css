@@ -1,4 +1,8 @@
 /* ===========================
+   FONT IMPORTS
+   =========================== */
+
+/* ===========================
    COLOR PALETTE & VARIABLES
    =========================== */
 :root {
@@ -60,10 +64,13 @@ body {
 }
 
 .logo {
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 32px;
+    font-weight: 600;
+    font-family: 'Cormorant Garamond', serif;
     color: var(--primary);
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
 }
 
 .nav-menu {
