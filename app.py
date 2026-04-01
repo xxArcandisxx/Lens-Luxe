@@ -231,6 +231,12 @@ def dashboard():
     user = User.query.get(session['user_id'])
     return render_template('dashboard.html', user=user)
 
+@app.route('/settings')
+@login_required
+def settings():
+    user = User.query.get(session['user_id'])
+    return render_template('settings.html', user=user)
+
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():

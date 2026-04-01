@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Account Settings - Lens&Luxe">
+    <title>Settings - Lens&Luxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+            flex-direction: column;
+            align-items: center;
+        }
+        .edit-button {
+            padding: 15px 30px;
+            background-color: #5a1020;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .edit-button:hover {
+            background-color: #3a0f12;
+        }
+        .logout-button {
+            padding: 15px 30px;
+            background-color: #e0e0e0;
+            color: #c41e3a;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .logout-button:hover {
+            background-color: #c0c0c0;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #5a1020;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Lens&Luxe</div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('home') }}#blog" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Settings Section -->
+    <section class="account-section">
+        <div class="account-container" style="max-width: 600px;">
+            <div class="account-content">
+                <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+                
+                <h1>Account Settings</h1>
+                <p>Manage your account preferences and secure your profile</p>
+
+                <div style="background: #f9f9f9; padding: 40px; border-radius: 10px; margin: 30px 0;">
+                    <div class="action-buttons">
+                        <a href="{{ url_for('profile') }}" class="edit-button">Edit Profile</a>
+                        <a href="{{ url_for('change_password') }}" class="edit-button">Change Password</a>
+                        <div style="width: 100%; max-width: 300px; border-top: 1px solid #ddd; margin: 15px 0;"></div>
+                        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

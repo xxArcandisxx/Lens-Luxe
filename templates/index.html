@@ -22,9 +22,16 @@
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
                 {% if user %}
-                    <li><a href="{{ url_for('dashboard') }}" class="nav-link" style="color: #5a1020; font-weight: bold;">Dashboard</a></li>
-                    <li><span style="color: #5a1020; font-weight: 500;">Welcome, {{ user.first_name }}!</span></li>
-                    <li><a href="{{ url_for('logout') }}" class="nav-link" style="color: #c41e3a;">Logout</a></li>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}" class="nav-link" style="display: flex; align-items: center; gap: 10px; padding: 0;">
+                            {% if user.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #5a1020;">
+                            {% else %}
+                                <div style="width: 35px; height: 35px; border-radius: 50%; background-color: #5a1020; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">{{ user.first_name[0] | upper }}</div>
+                            {% endif %}
+                            <span style="color: #5a1020; font-weight: bold;">{{ user.first_name }}</span>
+                        </a>
+                    </li>
                 {% else %}
                     <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
                     <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>

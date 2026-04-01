@@ -70,7 +70,6 @@
                 <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
                 {% if user %}
                     <li><a href="{{ url_for('dashboard') }}" class="nav-link" style="color: #5a1020; font-weight: bold;">Dashboard</a></li>
-                    <li><a href="{{ url_for('logout') }}" class="nav-link" style="color: #c41e3a;">Logout</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -124,10 +123,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <a href="{{ url_for('profile') }}" class="edit-button">Edit Profile</a>
-                    <a href="{{ url_for('change_password') }}" class="edit-button">Change Password</a>
-                    <a href="{{ url_for('home') }}" class="edit-button" style="background-color: #c41e3a;">Continue Exploring</a>
-                    <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+                    <a href="{{ url_for('settings') }}" class="edit-button">Settings</a>
                 </div>
             </div>
         </div>

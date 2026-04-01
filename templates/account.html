@@ -23,7 +23,6 @@
                 <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
                 {% if user %}
                     <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
-                    <li><a href="{{ url_for('logout') }}" class="nav-link" style="color: #5a1020; font-weight: bold;">Logout</a></li>
                 {% else %}
                     <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
                     <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>
