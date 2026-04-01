@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your Lens&Luxe Dashboard">
+    <title>Dashboard - Lens&Luxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .profile-picture {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #5a1020;
+            margin-bottom: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .edit-button {
+            padding: 12px 30px;
+            background-color: #5a1020;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .edit-button:hover {
+            background-color: #3a0f12;
+        }
+        .logout-button {
+            padding: 12px 30px;
+            background-color: #ccc;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .logout-button:hover {
+            background-color: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Lens&Luxe</div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('home') }}#blog" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('dashboard') }}" class="nav-link" style="color: #5a1020; font-weight: bold;">Dashboard</a></li>
+                    <li><a href="{{ url_for('logout') }}" class="nav-link" style="color: #c41e3a;">Logout</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard Section -->
+    <section class="account-section">
+        <div class="account-container">
+            <div class="account-content">
+                <h1>Welcome Back, {{ user.first_name }}!</h1>
+                <p>Here's your account information</p>
+
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 10px; margin: 30px 0;">
+                    <!-- Profile Picture Section -->
+                    <div style="margin-bottom: 30px; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 30px;">
+                        {% if user.profile_picture %}
+                            <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture">
+                        {% else %}
+                            <div style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px; border: 3px solid #5a1020;">No picture yet</div>
+                        {% endif %}
+                        <p style="color: #666; font-size: 14px; margin: 0;">Profile Picture</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #5a1020; margin-bottom: 10px;">Account Details</h3>
+                        <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        {% if user.phone %}
+                            <p><strong>Phone:</strong> {{ user.phone }}</p>
+                        {% endif %}
+                        <p><strong>Member Since:</strong> {{ user.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+
+                    {% if user.interests %}
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #5a1020; margin-bottom: 10px;">Your Interests</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            {% for interest in user.interests.split(',') %}
+                                <span style="background-color: #5a1020; color: #fffef9; padding: 8px 15px; border-radius: 20px; font-size: 14px;">
+                                    {{ interest.title() }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <h3 style="color: #5a1020; margin-bottom: 10px;">Newsletter</h3>
+                        <p>{% if user.newsletter %}✓ Subscribed to newsletter{% else %}Not subscribed to newsletter{% endif %}</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{{ url_for('profile') }}" class="edit-button">Edit Profile</a>
+                    <a href="{{ url_for('change_password') }}" class="edit-button">Change Password</a>
+                    <a href="{{ url_for('home') }}" class="edit-button" style="background-color: #c41e3a;">Continue Exploring</a>
+                    <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Lens&Luxe</h4>
+                    <p>Your destination for fashion, style, and luxury living.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('home') }}">Home</a></li>
+                        <li><a href="{{ url_for('home') }}#blog">Blog</a></li>
+                        <li><a href="{{ url_for('home') }}#gallery">Gallery</a></li>
+                        <li><a href="{{ url_for('home') }}#about">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link">Instagram</a>
+                        <a href="#" class="social-link">Pinterest</a>
+                        <a href="#" class="social-link">Twitter</a>
+                        <a href="#" class="social-link">Facebook</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
