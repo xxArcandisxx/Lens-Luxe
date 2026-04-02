@@ -110,7 +110,6 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert(data.message);
                     window.location.href = '{{ url_for("home") }}';
                 } else {
                     document.getElementById('errorMessage').textContent = data.error;

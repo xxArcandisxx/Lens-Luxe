@@ -149,6 +149,7 @@ def account():
         first_name = request.form.get('firstName')
         last_name = request.form.get('lastName')
         email = request.form.get('email')
+        if email: email = email.lower()
         password = request.form.get('password')
         confirm_password = request.form.get('confirmPassword')
         phone = request.form.get('phone', '')
@@ -205,6 +206,7 @@ def account():
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
+        if email: email = email.lower()
         password = request.form.get('password')
 
         if not email or not password:
@@ -260,6 +262,7 @@ def profile():
             
             # Check if new email is provided and is different from current
             new_email = request.form.get('email', user.email)
+            if new_email: new_email = new_email.lower()
             if new_email != user.email:
                 # Check if email already exists
                 existing_user = User.query.filter_by(email=new_email).first()
@@ -333,6 +336,7 @@ def forgot_password():
     """Request password reset"""
     if request.method == 'POST':
         email = request.form.get('email')
+        if email: email = email.lower()
         
         if not email:
             return jsonify({'error': 'Please enter your email'}), 400
