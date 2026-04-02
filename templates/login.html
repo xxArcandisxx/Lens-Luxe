@@ -14,9 +14,8 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">Lens&Luxe</div>
+            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
             <ul class="nav-menu">
-                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
                 <li><a href="{{ url_for('home') }}#blog" class="nav-link">Blog</a></li>
                 <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
                 <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
