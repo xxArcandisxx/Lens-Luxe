@@ -20,12 +20,15 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # File Upload Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'profiles')
+POST_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'posts')
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+Path(POST_UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['POST_UPLOAD_FOLDER'] = POST_UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
 # Email Configuration
@@ -56,6 +59,9 @@ class User(db.Model):
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    posts = db.relationship('Post', backref='author', lazy=True, cascade="all, delete-orphan")
+    comments = db.relationship('Comment', backref='author', lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -78,6 +84,23 @@ class User(db.Model):
     def clear_reset_token(self):
         self.reset_token = None
         self.reset_token_expiry = None
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    image = db.Column(db.String(255), nullable=True)
+    tags = db.Column(db.String(500), default='')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # ===========================
 # LOGIN REQUIRED DECORATOR
@@ -102,6 +125,15 @@ def save_profile_picture(file):
         # Generate unique filename
         filename = f"{session['user_id']}_{secrets.token_hex(4)}.{file.filename.rsplit('.', 1)[1].lower()}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        return filename
+    return None
+
+def save_post_picture(file):
+    """Save uploaded post picture and return filename"""
+    if file and allowed_file(file.filename):
+        filename = f"post_{session['user_id']}_{secrets.token_hex(6)}.{file.filename.rsplit('.', 1)[1].lower()}"
+        filepath = os.path.join(app.config['POST_UPLOAD_FOLDER'], filename)
         file.save(filepath)
         return filename
     return None
@@ -403,6 +435,123 @@ def user_status():
             'email': user.email
         })
     return jsonify({'logged_in': False})
+
+# ===========================
+# BLOG ROUTES
+# ===========================
+
+@app.route('/blog')
+def blog():
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    return render_template('blog.html', posts=posts, user=user)
+
+@app.route('/blog/create', methods=['GET', 'POST'])
+@login_required
+def blog_create():
+    user = User.query.get(session['user_id'])
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        tags = request.form.get('tags', '')
+        
+        if not title or not content:
+            return jsonify({'error': 'Title and content are required'}), 400
+            
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                image_filename = save_post_picture(file)
+                if not image_filename:
+                    return jsonify({'error': 'Invalid image file type'}), 400
+        
+        post = Post(title=title, content=content, image=image_filename, tags=tags, user_id=user.id)
+        try:
+            db.session.add(post)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Post created successfully!', 'redirect': url_for('blog')}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to create post'}), 500
+            
+    return render_template('blog_create.html', user=user)
+
+@app.route('/blog/<int:post_id>')
+def blog_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    return render_template('blog_post.html', post=post, user=user)
+
+@app.route('/blog/<int:post_id>/comment', methods=['POST'])
+@login_required
+def blog_comment(post_id):
+    post = Post.query.get_or_404(post_id)
+    content = request.form.get('content')
+    if not content:
+        return redirect(url_for('blog_post', post_id=post.id))
+        
+    comment = Comment(content=content, user_id=session['user_id'], post_id=post.id)
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('blog_post', post_id=post.id))
+
+@app.route('/blog/<int:post_id>/edit', methods=['GET', 'POST'])
+@login_required
+def blog_edit(post_id):
+    post = Post.query.get_or_404(post_id)
+    user = User.query.get(session['user_id'])
+    if post.user_id != user.id:
+        return redirect(url_for('blog'))
+        
+    if request.method == 'POST':
+        post.title = request.form.get('title', post.title)
+        post.content = request.form.get('content', post.content)
+        post.tags = request.form.get('tags', post.tags)
+        
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                if post.image:
+                    old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], post.image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                image_filename = save_post_picture(file)
+                if image_filename:
+                    post.image = image_filename
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Post updated!', 'redirect': url_for('blog_post', post_id=post.id)}), 200
+        
+    return render_template('blog_edit.html', post=post, user=user)
+
+@app.route('/blog/<int:post_id>/delete', methods=['POST'])
+@login_required
+def blog_delete(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if post.image:
+        old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], post.image)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+            
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Post deleted', 'redirect': url_for('blog')}), 200
+
+@app.route('/comment/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def comment_delete(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.user_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    post_id = comment.post_id
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Comment deleted', 'redirect': url_for('blog_post', post_id=post_id)}), 200
 
 # ===========================
 # ERROR HANDLERS

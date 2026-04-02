@@ -16,7 +16,7 @@
         <div class="nav-container">
             <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
             <ul class="nav-menu">
-                <li><a href="#blog" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
                 <li><a href="#gallery" class="nav-link">Gallery</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
@@ -45,11 +45,11 @@
             {% if user %}
                 <h1>Welcome back, {{ user.first_name }}!</h1>
                 <p>Discover New Stories in Luxury Fashion</p>
-                <a href="#blog" class="cta-button">Explore Our Stories</a>
+                <a href="{{ url_for('blog') }}" class="cta-button">Explore Our Stories</a>
             {% else %}
                 <h1>Welcome to Lens&Luxe</h1>
                 <p>Capturing Style, Celebrating Elegance</p>
-                <a href="#blog" class="cta-button">Explore Our Stories</a>
+                <a href="{{ url_for('blog') }}" class="cta-button">Explore Our Stories</a>
             {% endif %}
         </div>
     </section>
@@ -192,7 +192,7 @@
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="{{ url_for('home') }}">Home</a></li>
-                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="{{ url_for('blog') }}">Blog</a></li>
                         <li><a href="#gallery">Gallery</a></li>
                         <li><a href="#about">About</a></li>
                     </ul>

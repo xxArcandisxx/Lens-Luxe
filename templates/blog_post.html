@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }} - Lens&Luxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                    <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div style="max-width: 900px; margin: 120px auto 60px; padding: 0 20px;">
+        <!-- Post Header -->
+        <div style="text-align: center; margin-bottom: 40px;">
+            <p style="color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">{{ post.created_at.strftime('%B %d, %Y') }}</p>
+            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; color: #5a1020; margin: 10px 0;">{{ post.title }}</h1>
+            <p style="font-size: 1.1rem; color: #333;">By <span style="font-style: italic;">{{ post.author.first_name }} {{ post.author.last_name }}</span></p>
+            
+            {% if user and post.user_id == user.id %}
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px;">
+                <a href="{{ url_for('blog_edit', post_id=post.id) }}" style="color: #666; text-decoration: none; font-size: 0.9rem;">Edit Post</a>
+                <form action="{{ url_for('blog_delete', post_id=post.id) }}" method="POST" id="deletePostForm" style="display:inline;">
+                    <button type="submit" style="background: none; border: none; color: #cc0000; cursor: pointer; font-size: 0.9rem; text-decoration: underline;" onclick="return confirm('Are you sure you want to delete this post?');">Delete Post</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Post Image -->
+        {% if post.image %}
+        <div style="margin-bottom: 40px; text-align: center;">
+            <img src="{{ url_for('static', filename='uploads/posts/' + post.image) }}" alt="{{ post.title }}" style="max-width: 100%; height: auto; max-height: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        </div>
+        {% endif %}
+
+        <!-- Content -->
+        <div style="font-size: 1.15rem; line-height: 1.8; color: #444; margin-bottom: 50px; white-space: pre-wrap;">{{ post.content }}</div>
+
+        <!-- Tags -->
+        {% if post.tags %}
+        <div style="margin-bottom: 60px; border-top: 1px solid #eee; padding-top: 20px;">
+            <span style="font-weight: 600; margin-right: 10px; color: #333;">Tags:</span>
+            {% for tag in post.tags.split(',') %}
+                {% if tag.strip() %}
+                    <span style="font-size: 0.85rem; background: #f9f9f9; padding: 5px 12px; border-radius: 20px; color: #666; margin-right: 5px; display: inline-block;">#{{ tag.strip() }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Comments Section -->
+        <div style="background: #fdfafb; padding: 40px; border-radius: 8px;">
+            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #5a1020; margin-bottom: 30px;">Comments ({{ post.comments|length }})</h3>
+
+            {% if user %}
+            <form action="{{ url_for('blog_comment', post_id=post.id) }}" method="POST" style="margin-bottom: 40px;">
+                <textarea name="content" required placeholder="Leave a comment..." style="width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 1rem; resize: vertical; min-height: 100px; margin-bottom: 15px;"></textarea>
+                <button type="submit" style="background-color: #5a1020; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;">Post Comment</button>
+            </form>
+            {% else %}
+            <p style="margin-bottom: 40px; color: #666;">Please <a href="{{ url_for('login') }}" style="color: #5a1020;">log in</a> to leave a comment.</p>
+            {% endif %}
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                {% for comment in post.comments %}
+                <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #eee;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: #333;">{{ comment.author.first_name }} {{ comment.author.last_name }}</strong>
+                        <div style="display:flex; gap: 10px; align-items:center;">
+                            <span style="color: #999; font-size: 0.85rem;">{{ comment.created_at.strftime('%B %d, %Y %H:%M') }}</span>
+                            {% if user and comment.user_id == user.id %}
+                                <form action="{{ url_for('comment_delete', comment_id=comment.id) }}" method="POST">
+                                    <button type="submit" style="background: none; border: none; color: #cc0000; font-size: 0.8rem; cursor: pointer;" onclick="return confirm('Delete this comment?');">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p style="color: #555; white-space: pre-wrap; margin: 0;">{{ comment.content }}</p>
+                </div>
+                {% else %}
+                <p style="color: #999; font-style: italic;">No comments yet. Be the first to start the conversation!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Lens&Luxe. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const deletePostForm = document.getElementById('deletePostForm');
+        if (deletePostForm) {
+            deletePostForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!confirm('Are you sure you want to delete this post?')) return;
+                
+                try {
+                    const response = await fetch(e.target.action, { method: 'POST' });
+                    const data = await response.json();
+                    if (response.ok) {
+                        window.location.href = data.redirect;
+                    } else {
+                        alert(data.error);
+                    }
+                } catch (err) {
+                    alert('Error deleting post.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

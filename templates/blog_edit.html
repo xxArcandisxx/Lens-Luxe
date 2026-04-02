@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post - Lens&Luxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="account-section" style="padding-top: 100px;">
+        <div class="account-container" style="max-width: 800px;">
+            <div class="account-content">
+                <h1>Edit Your Story</h1>
+                <div id="errorMessage" style="color: red; margin-bottom: 20px; font-weight: 600;"></div>
+
+                <form class="account-form" id="editPostForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" required value="{{ post.title }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="image">Replace High-Res Photograph (Optional)</label>
+                        <input type="file" id="image" name="image" accept="image/png, image/jpeg, image/jpg, image/gif" style="border: 1px solid #ccc; padding: 10px; width: 100%;">
+                        <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display:block;">Leave blank to keep existing image</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tags">Tags (comma separated)</label>
+                        <input type="text" id="tags" name="tags" value="{{ post.tags }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="content">Description</label>
+                        <textarea id="content" name="content" required rows="10" style="width: 100%; padding: 10px; border: 1px solid #ccc; font-family: inherit; resize: vertical;">{{ post.content }}</textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="background-color: #5a1020; color: white;">Save Changes</button>
+                    <a href="{{ url_for('blog_post', post_id=post.id) }}" style="display:block; text-align: center; margin-top: 15px; color: #5a1020; text-decoration: none;">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('editPostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch("{{ url_for('blog_edit', post_id=post.id) }}", {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = data.redirect;
+                } else {
+                    document.getElementById('errorMessage').textContent = data.error;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Changes';
+                }
+            } catch (err) {
+                document.getElementById('errorMessage').textContent = 'An error occurred while saving.';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Changes';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Lens&Luxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
+                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                    <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <section class="blog-feed-section" style="padding: 100px 5%; min-height: 80vh;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: #5a1020;">The Journal</h1>
+            {% if user %}
+                <a href="{{ url_for('blog_create') }}" class="btn-primary" style="padding: 10px 20px; background-color: #5a1020; color: white; text-decoration: none; border: none; cursor: pointer; transition: background-color 0.3s; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a Post</a>
+            {% endif %}
+        </div>
+
+        <div class="blog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px;">
+            {% for post in posts %}
+            <div class="blog-card" style="border: 1px solid #eee; overflow: hidden; transition: transform 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff;">
+                <a href="{{ url_for('blog_post', post_id=post.id) }}" style="text-decoration: none; color: inherit; display: block;">
+                    {% if post.image %}
+                    <img src="{{ url_for('static', filename='uploads/posts/' + post.image) }}" alt="{{ post.title }}" style="width: 100%; height: 250px; object-fit: cover;">
+                    {% else %}
+                    <div style="width: 100%; height: 250px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; color: #999;">No Image</div>
+                    {% endif %}
+                    <div class="blog-card-content" style="padding: 20px;">
+                        <p style="font-size: 0.8rem; color: #999; margin-bottom: 10px;">{{ post.created_at.strftime('%B %d, %Y') }} • By {{ post.author.first_name }}</p>
+                        <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin-bottom: 15px; color: #333;">{{ post.title }}</h2>
+                        {% if post.tags %}
+                        <div style="display:flex; gap: 5px; flex-wrap: wrap;">
+                            {% for tag in post.tags.split(',') %}
+                                {% if tag.strip() %}
+                                    <span style="font-size: 0.75rem; background: #f0f0f0; padding: 3px 8px; border-radius: 3px; color: #666;">#{{ tag.strip() }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% else %}
+            <p>No stories have been published yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Lens&Luxe. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
