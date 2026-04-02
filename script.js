@@ -60,6 +60,22 @@ function handleAccountCreation(event) {
     // Simulate account creation
     alert(`Welcome ${firstName}! Your account has been successfully created. You can now start exploring Lens&Luxe.`);
     event.target.reset();
+    window.location.href = 'index.html';
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    const email = event.target.querySelector('#email').value;
+    const password = event.target.querySelector('#password').value;
+
+    if (!email || !password) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    alert('Welcome back! You have successfully logged in.');
+    event.target.reset();
+    window.location.href = 'index.html';
 }
 
 // ===========================
