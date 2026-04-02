@@ -16,6 +16,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # File Upload Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'profiles')
@@ -185,6 +186,7 @@ def account():
             db.session.commit()
 
             # Log user in automatically after registration
+            session.permanent = True
             session['user_id'] = new_user.id
             session['user_name'] = first_name
 
@@ -211,6 +213,7 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
+            session.permanent = True
             session['user_id'] = user.id
             session['user_name'] = user.first_name
             return jsonify({'success': True, 'message': f'Welcome back, {user.first_name}!'}), 200
