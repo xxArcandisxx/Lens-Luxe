@@ -14,7 +14,19 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# Setup database connection
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # SQLAlchemy 1.4+ requires 'postgresql://' instead of 'postgres://'
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+elif os.environ.get('VERCEL') == '1':
+    # Fallback for Vercel testing without external DB
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/users.db'
+else:
+    # Fallback for local development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
@@ -24,8 +36,11 @@ POST_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads'
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 
-Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
-Path(POST_UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+try:
+    Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+    Path(POST_UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+except OSError:
+    print("Could not create upload folders. This is normal on read-only environments like Vercel.")
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['POST_UPLOAD_FOLDER'] = POST_UPLOAD_FOLDER
@@ -563,7 +578,8 @@ def not_found(error):
         user = User.query.get(session['user_id'])
     return render_template('404.html', user=user), 404
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True, port=5000)
