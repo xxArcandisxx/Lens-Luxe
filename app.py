@@ -30,6 +30,10 @@ else:
     # Fallback for local development
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+}
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # File Upload Configuration
