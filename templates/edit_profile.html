@@ -116,7 +116,11 @@
                         <h3>Profile Picture</h3>
                         <div style="text-align: center;">
                             {% if user.profile_picture %}
-                                <img id="profilePicturePreview" src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture-preview">
+                                {% if 'http' in user.profile_picture %}
+                                    <img id="profilePicturePreview" src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-picture-preview">
+                                {% else %}
+                                    <img id="profilePicturePreview" src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture-preview">
+                                {% endif %}
                             {% else %}
                                 <div style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px;">No picture yet</div>
                             {% endif %}

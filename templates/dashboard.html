@@ -85,7 +85,11 @@
                     <!-- Profile Picture Section -->
                     <div style="margin-bottom: 30px; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 30px;">
                         {% if user.profile_picture %}
-                            <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture">
+                            {% if 'http' in user.profile_picture %}
+                                <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-picture">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture">
+                            {% endif %}
                         {% else %}
                             <div style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px; border: 3px solid #5a1020;">No picture yet</div>
                         {% endif %}

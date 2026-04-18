@@ -8,6 +8,8 @@ import os
 from datetime import datetime, timedelta
 import secrets
 from pathlib import Path
+import urllib.request
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -139,20 +141,57 @@ def login_required(f):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def upload_to_vercel_blob(filename, file_content):
+    token = os.environ.get('BLOB_READ_WRITE_TOKEN')
+    if not token:
+        print("BLOB_READ_WRITE_TOKEN not found! Falling back to local save if configured.")
+        return None
+        
+    url = f"https://blob.vercel-storage.com/{filename}"
+    req = urllib.request.Request(url, data=file_content, method='PUT')
+    req.add_header('Authorization', f'Bearer {token}')
+    req.add_header('x-api-version', '7')
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode())
+            return result.get('url')
+    except Exception as e:
+        print(f"Blob upload failed: {e}")
+        return None
+
 def save_profile_picture(file):
-    """Save uploaded profile picture and return filename"""
+    """Save uploaded profile picture and return filename or URL"""
     if file and allowed_file(file.filename):
         # Generate unique filename
-        filename = f"{session['user_id']}_{secrets.token_hex(4)}.{file.filename.rsplit('.', 1)[1].lower()}"
+        filename = f"profiles_{session['user_id']}_{secrets.token_hex(4)}.{file.filename.rsplit('.', 1)[1].lower()}"
+        
+        # Try Vercel Blob first
+        file_content = file.read()
+        blob_url = upload_to_vercel_blob(filename, file_content)
+        if blob_url:
+            return blob_url
+            
+        # Fallback to local file save
+        file.seek(0) # Reset stream
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         return filename
     return None
 
 def save_post_picture(file):
-    """Save uploaded post picture and return filename"""
+    """Save uploaded post picture and return filename or URL"""
     if file and allowed_file(file.filename):
         filename = f"post_{session['user_id']}_{secrets.token_hex(6)}.{file.filename.rsplit('.', 1)[1].lower()}"
+        
+        # Try Vercel Blob first
+        file_content = file.read()
+        blob_url = upload_to_vercel_blob(filename, file_content)
+        if blob_url:
+            return blob_url
+            
+        # Fallback to local save
+        file.seek(0)
         filepath = os.path.join(app.config['POST_UPLOAD_FOLDER'], filename)
         file.save(filepath)
         return filename
