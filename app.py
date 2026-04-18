@@ -572,6 +572,15 @@ def comment_delete(comment_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Comment deleted', 'redirect': url_for('blog_post', post_id=post_id)}), 200
 
+@app.route('/api/debug-db')
+def debug_db():
+    uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    return jsonify({
+        'using_neon_postgres': 'postgres' in uri or 'neon.tech' in uri,
+        'using_temporary_db': '/tmp/' in uri,
+        'is_vercel_environment': os.environ.get('VERCEL') == '1'
+    })
+
 # ===========================
 # ERROR HANDLERS
 # ===========================
