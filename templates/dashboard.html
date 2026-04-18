@@ -94,6 +94,12 @@
                             <div style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px; border: 3px solid #5a1020;">No picture yet</div>
                         {% endif %}
                         <p style="color: #666; font-size: 14px; margin: 0;">Profile Picture</p>
+                        
+                        {% if user.bio %}
+                            <div style="margin-top: 25px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #5a1020; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <p style="font-style: italic; color: #444; margin: 0; line-height: 1.6;">"{{ user.bio }}"</p>
+                            </div>
+                        {% endif %}
                     </div>
 
                     <div style="margin-bottom: 20px;">

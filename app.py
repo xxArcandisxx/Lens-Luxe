@@ -72,6 +72,7 @@ class User(db.Model):
     interests = db.Column(db.String(500), default='')  # Comma-separated interests
     newsletter = db.Column(db.Boolean, default=True)
     profile_picture = db.Column(db.String(255), default='')
+    bio = db.Column(db.String(500), default='')
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -348,6 +349,7 @@ def profile():
             user.first_name = request.form.get('firstName', user.first_name)
             user.last_name = request.form.get('lastName', user.last_name)
             user.phone = request.form.get('phone', user.phone)
+            user.bio = request.form.get('bio', user.bio)
             user.newsletter = 'newsletter' in request.form
             user.interests = ','.join(request.form.getlist('interests'))
             
