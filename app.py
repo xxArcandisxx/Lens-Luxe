@@ -125,6 +125,11 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
+        # Prevent 500 errors if user session exists but database is empty 
+        user = User.query.get(session['user_id'])
+        if not user:
+            session.clear()
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -391,8 +396,7 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            # For security, don't reveal if email exists
-            return jsonify({'success': True, 'message': 'If an account exists with this email, a reset link has been sent.'}), 200
+            return jsonify({'error': "Account doesn't exist."}), 400
         
         try:
             # Generate reset token
