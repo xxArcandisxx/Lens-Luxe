@@ -111,7 +111,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    image = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.Text, nullable=True)
     tags = db.Column(db.String(500), default='')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -524,11 +524,15 @@ def blog_create():
             
         image_filename = None
         if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename:
-                image_filename = save_post_picture(file)
-                if not image_filename:
-                    return jsonify({'error': 'Invalid image file type'}), 400
+            files = request.files.getlist('image')
+            image_filenames = []
+            for file in files:
+                if file and file.filename:
+                    filename = save_post_picture(file)
+                    if filename:
+                        image_filenames.append(filename)
+            if image_filenames:
+                image_filename = ",".join(image_filenames)
         
         post = Post(title=title, content=content, image=image_filename, tags=tags, user_id=user.id)
         try:
@@ -574,15 +578,20 @@ def blog_edit(post_id):
         post.tags = request.form.get('tags', post.tags)
         
         if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename:
+            files = request.files.getlist('image')
+            image_filenames = []
+            for file in files:
+                if file and file.filename:
+                    filename = save_post_picture(file)
+                    if filename:
+                        image_filenames.append(filename)
+                        
+            if image_filenames:
+                new_images_str = ",".join(image_filenames)
                 if post.image:
-                    old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], post.image)
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                image_filename = save_post_picture(file)
-                if image_filename:
-                    post.image = image_filename
+                    post.image = post.image + "," + new_images_str
+                else:
+                    post.image = new_images_str
         
         db.session.commit()
         return jsonify({'success': True, 'message': 'Post updated!', 'redirect': url_for('blog_post', post_id=post.id)}), 200
@@ -597,9 +606,12 @@ def blog_delete(post_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     if post.image:
-        old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], post.image)
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        for img in post.image.split(','):
+            img = img.strip()
+            if img:
+                old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], img)
+                if not img.startswith('http') and os.path.exists(old_path):
+                    os.remove(old_path)
             
     db.session.delete(post)
     db.session.commit()
