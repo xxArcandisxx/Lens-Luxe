@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Edit your Lens&Luxe profile">
-    <title>Edit Profile - Lens&Luxe</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Lens&Luxe{% endblock %}
+
+{% block styles %}
     <style>
         .profile-picture-preview {
             width: 150px;
@@ -81,25 +75,13 @@
             text-decoration: underline;
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
-            <ul class="nav-menu">
-                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
-                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
-                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
-                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
-                {% if user %}
-                    <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+{% endblock %}
 
-    <!-- Profile Edit Section -->
+{% block content %}
+    <!-- Hidden Inputs for JavaScript Data (Hidden Input Pattern) -->
+    <input type="hidden" id="flask-profile-url" value="{{ url_for('profile') }}">
+    <input type="hidden" id="flask-dashboard-url" value="{{ url_for('dashboard') }}">
+
     <section class="account-section">
         <div class="account-container">
             <div class="account-content">
@@ -114,7 +96,7 @@
                     <!-- Profile Picture Section -->
                     <div class="profile-section">
                         <h3>Profile Picture</h3>
-                        <div style="text-align: center;">
+                        <div style="text-align: center;" id="previewContainer">
                             {% if user.profile_picture %}
                                 {% if 'http' in user.profile_picture %}
                                     <img id="profilePicturePreview" src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-picture-preview">
@@ -122,7 +104,7 @@
                                     <img id="profilePicturePreview" src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture" class="profile-picture-preview">
                                 {% endif %}
                             {% else %}
-                                <div style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px;">No picture yet</div>
+                                <div id="noPicturePlaceholder" style="width: 150px; height: 150px; background-color: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 14px;">No picture yet</div>
                             {% endif %}
                         </div>
                         <div class="profile-picture-upload">
@@ -159,7 +141,7 @@
 
                         <div class="form-group" style="margin-top: 15px;">
                             <label for="bio">Bio / About Me</label>
-                            <textarea id="bio" name="bio" rows="4" placeholder="Tell us a little bit about yourself..." style="padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 5px; font-family: inherit; font-size: 14px; resize: vertical;">{{ user.bio }}</textarea>
+                            <textarea id="bio" name="bio" rows="4" placeholder="Tell us a little bit about yourself..." style="padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 5px; font-family: inherit; font-size: 14px; resize: vertical;">{% if user.bio %}{{ user.bio }}{% endif %}</textarea>
                         </div>
                     </div>
 
@@ -168,19 +150,19 @@
                         <h3>Fashion Interests</h3>
                         <div class="checkbox-group">
                             <div class="checkbox-item">
-                                <input type="checkbox" id="luxury" name="interests" value="luxury" {% if 'luxury' in user.interests %}checked{% endif %}>
+                                <input type="checkbox" id="luxury" name="interests" value="luxury" {% if user.interests and 'luxury' in user.interests %}checked{% endif %}>
                                 <label for="luxury">Luxury Fashion</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" id="vintage" name="interests" value="vintage" {% if 'vintage' in user.interests %}checked{% endif %}>
+                                <input type="checkbox" id="vintage" name="interests" value="vintage" {% if user.interests and 'vintage' in user.interests %}checked{% endif %}>
                                 <label for="vintage">Vintage Style</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" id="trends" name="interests" value="trends" {% if 'trends' in user.interests %}checked{% endif %}>
+                                <input type="checkbox" id="trends" name="interests" value="trends" {% if user.interests and 'trends' in user.interests %}checked{% endif %}>
                                 <label for="trends">Latest Trends</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" id="accessories" name="interests" value="accessories" {% if 'accessories' in user.interests %}checked{% endif %}>
+                                <input type="checkbox" id="accessories" name="interests" value="accessories" {% if user.interests and 'accessories' in user.interests %}checked{% endif %}>
                                 <label for="accessories">Accessories</label>
                             </div>
                         </div>
@@ -208,56 +190,30 @@
             </div>
         </div>
     </section>
+{% endblock %}
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>Lens&Luxe</h4>
-                    <p>Your destination for fashion, style, and luxury living.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="{{ url_for('home') }}">Home</a></li>
-                        <li><a href="{{ url_for('blog') }}">Blog</a></li>
-                        <li><a href="{{ url_for('home') }}#gallery">Gallery</a></li>
-                        <li><a href="{{ url_for('home') }}#about">About</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#" class="social-link">Instagram</a>
-                        <a href="#" class="social-link">Pinterest</a>
-                        <a href="#" class="social-link">Twitter</a>
-                        <a href="#" class="social-link">Facebook</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
-            </div>
-        </div>
-    </footer>
-
+{% block scripts %}
+    {{ super() }}
     <script>
         function previewImage(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const existingPreview = document.getElementById('profilePicturePreview');
-                    if (existingPreview) {
-                        existingPreview.src = e.target.result;
-                    } else {
-                        const img = document.createElement('img');
-                        img.id = 'profilePicturePreview';
-                        img.src = e.target.result;
-                        img.className = 'profile-picture-preview';
-                        document.querySelector('.profile-picture-upload').parentElement.insertBefore(img, document.querySelector('.profile-picture-upload'));
+                    let preview = document.getElementById('profilePicturePreview');
+                    const placeholder = document.getElementById('noPicturePlaceholder');
+                    
+                    if (!preview) {
+                        if (placeholder) {
+                            placeholder.style.display = 'none';
+                        }
+                        preview = document.createElement('img');
+                        preview.id = 'profilePicturePreview';
+                        preview.className = 'profile-picture-preview';
+                        document.getElementById('previewContainer').appendChild(preview);
                     }
+                    preview.src = e.target.result;
+                    preview.style.display = 'inline-block';
                 };
                 reader.readAsDataURL(file);
             }
@@ -268,7 +224,8 @@
             const formData = new FormData(e.target);
 
             try {
-                const response = await fetch('{{ url_for("profile") }}', {
+                const profileUrl = document.getElementById('flask-profile-url').value;
+                const response = await fetch(profileUrl, {
                     method: 'POST',
                     body: formData
                 });
@@ -280,7 +237,8 @@
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('errorMessage').style.display = 'none';
                     setTimeout(() => {
-                        window.location.href = '{{ url_for("dashboard") }}';
+                        const dashboardUrl = document.getElementById('flask-dashboard-url').value;
+                        window.location.href = dashboardUrl;
                     }, 2000);
                 } else {
                     document.getElementById('errorMessage').textContent = data.error;
@@ -294,5 +252,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

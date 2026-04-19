@@ -1,31 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Login to your Lens&Luxe account">
-    <title>Login - Lens&Luxe</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
-            <ul class="nav-menu">
-                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
-                <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
-                <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
-                <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
-                <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>
-            </ul>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <!-- Account Section -->
+{% block title %}Login - Lens&Luxe{% endblock %}
+{% block description %}Login to your Lens&Luxe account{% endblock %}
+
+{% block content %}
+    <!-- Hidden Inputs for JavaScript Data (Hidden Input Pattern) -->
+    <input type="hidden" id="flask-login-url" value="{{ url_for('login') }}">
+    <input type="hidden" id="flask-home-url" value="{{ url_for('home') }}">
+
     <section class="account-section">
         <div class="account-container" style="max-width: 500px;">
             <div class="account-content">
@@ -62,47 +44,18 @@
             </div>
         </div>
     </section>
+{% endblock %}
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>Lens&Luxe</h4>
-                    <p>Your destination for fashion, style, and luxury living.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="{{ url_for('home') }}">Home</a></li>
-                        <li><a href="{{ url_for('blog') }}">Blog</a></li>
-                        <li><a href="{{ url_for('home') }}#gallery">Gallery</a></li>
-                        <li><a href="{{ url_for('home') }}#about">About</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#" class="social-link">Instagram</a>
-                        <a href="#" class="social-link">Pinterest</a>
-                        <a href="#" class="social-link">Twitter</a>
-                        <a href="#" class="social-link">Facebook</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
-            </div>
-        </div>
-    </footer>
-
+{% block scripts %}
+    {{ super() }}
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
 
             try {
-                const response = await fetch('{{ url_for("login") }}', {
+                const loginUrl = document.getElementById('flask-login-url').value;
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     body: formData
                 });
@@ -110,7 +63,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    window.location.href = '{{ url_for("home") }}';
+                    const homeUrl = document.getElementById('flask-home-url').value;
+                    window.location.href = homeUrl;
                 } else {
                     document.getElementById('errorMessage').textContent = data.error;
                     document.getElementById('errorMessage').style.display = 'block';
@@ -122,5 +76,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

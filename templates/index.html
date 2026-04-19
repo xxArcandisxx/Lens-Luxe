@@ -1,48 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Lens&Luxe - Fashion Blog showcasing style, trends, and luxury living">
-    <title>Lens&Luxe - Fashion & Lifestyle Blog</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo"><a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">Lens&Luxe</a></div>
-            <ul class="nav-menu">
-                <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
-                <li><a href="#gallery" class="nav-link">Gallery</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
-                {% if user %}
-                    <li>
-                        <a href="{{ url_for('dashboard') }}" class="nav-link" style="display: flex; align-items: center; gap: 10px; padding: 0;">
-                            {% if user.profile_picture %}
-                                {% if 'http' in user.profile_picture %}
-                                    <img src="{{ user.profile_picture }}" alt="Profile" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #5a1020;">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #5a1020;">
-                                {% endif %}
-                            {% else %}
-                                <div style="width: 35px; height: 35px; border-radius: 50%; background-color: #5a1020; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">{{ user.first_name[0] | upper }}</div>
-                            {% endif %}
-                            <span style="color: #5a1020; font-weight: bold;">{{ user.first_name }}</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
-                    <li><a href="{{ url_for('account') }}" class="nav-link">Sign Up</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
+{% block title %}Lens&Luxe - Fashion & Lifestyle Blog{% endblock %}
+{% block description %}Lens&Luxe - Fashion Blog showcasing style, trends, and luxury living{% endblock %}
+
+{% block content %}
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-content">
@@ -183,40 +144,9 @@
             </div>
         </div>
     </section>
+{% endblock %}
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>Lens&Luxe</h4>
-                    <p>Your destination for fashion, style, and luxury living.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="{{ url_for('home') }}">Home</a></li>
-                        <li><a href="{{ url_for('blog') }}">Blog</a></li>
-                        <li><a href="#gallery">Gallery</a></li>
-                        <li><a href="#about">About</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#" class="social-link">Instagram</a>
-                        <a href="#" class="social-link">Pinterest</a>
-                        <a href="#" class="social-link">Twitter</a>
-                        <a href="#" class="social-link">Facebook</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Lens&Luxe. All rights reserved. | Privacy Policy | Terms of Service</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
+{% block scripts %}
+    {{ super() }}
+    <!-- Additional scripts if any can go here -->
+{% endblock %}
