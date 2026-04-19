@@ -124,6 +124,17 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Tip(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False)  # 'fashion' or 'photography'
+    image = db.Column(db.Text, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    author = db.relationship('User', backref='tips')
+
 # ===========================
 # LOGIN REQUIRED DECORATOR
 # ===========================
@@ -644,6 +655,108 @@ def debug_db():
         'using_temporary_db': '/tmp/' in uri,
         'is_vercel_environment': os.environ.get('VERCEL') == '1'
     })
+
+# ===========================
+# TIPS ROUTES
+# ===========================
+
+@app.route('/tips')
+def tips():
+    category = request.args.get('category', None)
+    if category:
+        tips_list = Tip.query.filter_by(category=category).order_by(Tip.created_at.desc()).all()
+    else:
+        tips_list = Tip.query.order_by(Tip.created_at.desc()).all()
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    return render_template('tips.html', tips=tips_list, user=user, category=category)
+
+@app.route('/tips/create', methods=['GET', 'POST'])
+@login_required
+def tips_create():
+    user = User.query.get(session['user_id'])
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        category = request.form.get('category')
+
+        if not title or not content or not category:
+            return jsonify({'error': 'Title, content, and category are required'}), 400
+
+        if category not in ['fashion', 'photography']:
+            return jsonify({'error': 'Invalid category'}), 400
+
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                image_filename = save_post_picture(file)
+                if not image_filename:
+                    return jsonify({'error': 'Invalid image file type'}), 400
+
+        tip = Tip(title=title, content=content, category=category, image=image_filename, user_id=user.id)
+        try:
+            db.session.add(tip)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Tip published successfully!', 'redirect': url_for('tips')}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to publish tip'}), 500
+
+    return render_template('tips_create.html', user=user)
+
+@app.route('/tips/<int:tip_id>')
+def tips_view(tip_id):
+    tip = Tip.query.get_or_404(tip_id)
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    return render_template('tips_view.html', tip=tip, user=user)
+
+@app.route('/tips/<int:tip_id>/edit', methods=['GET', 'POST'])
+@login_required
+def tips_edit(tip_id):
+    tip = Tip.query.get_or_404(tip_id)
+    user = User.query.get(session['user_id'])
+
+    if tip.user_id != user.id:
+        return redirect(url_for('tips'))
+
+    if request.method == 'POST':
+        tip.title = request.form.get('title', tip.title)
+        tip.content = request.form.get('content', tip.content)
+        category = request.form.get('category')
+        if category in ['fashion', 'photography']:
+            tip.category = category
+
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                if tip.image and not tip.image.startswith('http'):
+                    old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], tip.image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                image_filename = save_post_picture(file)
+                if image_filename:
+                    tip.image = image_filename
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Tip updated!', 'redirect': url_for('tips_view', tip_id=tip.id)}), 200
+
+    return render_template('tips_edit.html', tip=tip, user=user)
+
+@app.route('/tips/<int:tip_id>/delete', methods=['POST'])
+@login_required
+def tips_delete(tip_id):
+    tip = Tip.query.get_or_404(tip_id)
+    if tip.user_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if tip.image and not tip.image.startswith('http'):
+        old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], tip.image)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    db.session.delete(tip)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Tip deleted', 'redirect': url_for('tips')}), 200
 
 # ===========================
 # ERROR HANDLERS
