@@ -27,21 +27,14 @@
                 <div class="tip-post">
                     <div class="tip-post-header">
                         <div class="tip-post-author">
-                            <span class="tip-category">{{ tip.category }}</span>
                             <span class="tip-author-name">{{ tip.author.first_name }} {{ tip.author.last_name }}</span>
+                            <span class="tip-category">{{ tip.category }}</span>
                             <span class="tip-post-time">{{ tip.created_at.strftime('%b %d, %Y') }}</span>
                         </div>
                         <a href="{{ url_for('tips_view', tip_id=tip.id) }}" class="tip-post-title">
                             {{ tip.title }}
                         </a>
                     </div>
-
-                    {% if tip.image %}
-                        <div class="tip-post-image-container">
-                            <img src="{{ tip.image if tip.image.startswith('http') else url_for('static', filename='uploads/posts/' + tip.image) }}"
-                                 alt="{{ tip.title }}" class="tip-post-image">
-                        </div>
-                    {% endif %}
 
                     <div class="tip-post-content">
                         <p class="tip-subtitle">{{ tip.subtitle }}</p>
