@@ -154,6 +154,11 @@
 </head>
 
 <body>
+    <input type="hidden" id="flask-blog-edit-url" value="{{ url_for('blog_edit', post_id=post.id) }}">
+    <input type="hidden" id="flask-upload-url" value="{{ url_for('upload_image') }}">
+    <input type="hidden" id="existing-post-image"
+        value="{% if post.image %}{{ post.image if 'http' in post.image else url_for('static', filename='uploads/posts/' + post.image) }}{% endif %}">
+
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo"><a href="{{ url_for('home') }}"
@@ -209,7 +214,8 @@
                         <input type="hidden" id="content" name="content">
                         <div id="editor-container"
                             style="height: 500px; background: white; font-family: inherit; font-size: 1.1rem; border: 1px solid #ccc;">
-                            {{ post.content | safe }}</div>
+                            {{ post.content | safe }}
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
@@ -250,7 +256,6 @@
         var AlignStyle = Quill.import('attributors/style/align');
         Quill.register(AlignStyle, true);
 
-        // Register custom smiley-face icon into Quill's native icon system
         var icons = Quill.import('ui/icons');
         icons['emoji'] = '<svg viewbox="0 0 18 18"><circle class="ql-stroke" cx="9" cy="9" r="7.5"/><circle cx="6.5" cy="7.5" r="1" class="ql-fill"/><circle cx="11.5" cy="7.5" r="1" class="ql-fill"/><path class="ql-stroke" d="M5.5 10.5Q9 13.5 12.5 10.5" stroke-linecap="round" fill="none"/></svg>';
 
@@ -265,7 +270,6 @@
             }
         });
 
-        // Direct click on the Quill-rendered emoji button
         const emojiBtn = quill.getModule('toolbar').container.querySelector('.ql-emoji');
         if (emojiBtn) {
             emojiBtn.addEventListener('click', (e) => {
@@ -282,7 +286,6 @@
             });
         }
 
-        // Wait for emoji-picker-element custom element to be registered before attaching
         customElements.whenDefined('emoji-picker').then(() => {
             document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
                 const range = quill.getSelection(true);
@@ -309,7 +312,8 @@
                     const fd = new FormData();
                     fd.append('image', file);
                     try {
-                        const response = await fetch("{{ url_for('upload_image') }}", {
+                        const uploadUrl = document.getElementById('flask-upload-url').value;
+                        const response = await fetch(uploadUrl, {
                             method: 'POST',
                             body: fd
                         });
@@ -329,13 +333,8 @@
 
         document.getElementById('editPostForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            // --- CORRECTION 1: Robust Check for Empty Content ---
             const html = quill.root.innerHTML;
-            const textContent = quill.getText().trim(); // Get plain text, trim whitespace
-
-            // Sync quill editor html to hidden input.
-            // If there's no actual text content, treat it as empty.
+            const textContent = quill.getText().trim();
             document.getElementById('content').value = textContent.length === 0 ? '' : html;
 
             const form = e.target;
@@ -344,14 +343,13 @@
             submitBtn.textContent = 'Saving...';
 
             try {
+                const editUrl = document.getElementById('flask-blog-edit-url').value;
                 const formData = new FormData(form);
-                const response = await fetch("{{ url_for('blog_edit', post_id=post.id) }}", {
+                const response = await fetch(editUrl, {
                     method: 'POST',
                     body: formData
                 });
-
                 const data = await response.json();
-
                 if (response.ok) {
                     window.location.href = data.redirect;
                 } else {
@@ -366,20 +364,15 @@
             }
         });
 
-        // ---- Preview ----
         document.getElementById('previewBtn').addEventListener('click', () => {
             document.getElementById('previewTitle').textContent = document.getElementById('title').value || 'Untitled';
-
             const now = new Date();
             document.getElementById('previewDate').textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
             document.getElementById('previewBody').innerHTML = quill.root.innerHTML;
 
-            // --- CORRECTION 2: Refined Cover Image Preview Logic ---
             const coverInput = document.getElementById('image');
             const coverImg = document.getElementById('previewCoverImg');
 
-            // Explicitly check for coverInput.files.length > 0 to handle cleared file inputs
             if (coverInput.files && coverInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = e => {
@@ -388,32 +381,24 @@
                 };
                 reader.readAsDataURL(coverInput.files[0]);
             } else {
-                {% if post.image %}
-                // Fallback to existing cover image from backend
-                coverImg.src = "{{ post.image if 'http' in post.image else url_for('static', filename='uploads/posts/' + post.image) }}";
-                coverImg.style.display = 'block';
-                {% else %}
-                // No new file, no existing cover. Keep it hidden.
-                coverImg.style.display = 'none';
-                {% endif %}
+                const existingUrl = document.getElementById('existing-post-image').value;
+                if (existingUrl) {
+                    coverImg.src = existingUrl;
+                    coverImg.style.display = 'block';
+                } else {
+                    coverImg.style.display = 'none';
+                }
             }
 
-            // --- CORRECTION 3: Improved Tag Formatting UX ---
             const tagsVal = document.getElementById('tags').value.trim();
             const tagsBlock = document.getElementById('previewTagsBlock');
             const tagsList = document.getElementById('previewTagsList');
             if (tagsVal) {
-                tagsList.innerHTML = tagsVal
-                    .split(',')
-                    .map(t => t.trim())              // Trim spaces from each tag
-                    .filter(t => t.length > 0)       // Remove completely empty tags
-                    .map(t => `<span>#${t}</span>`)  // Add # only to valid tags
-                    .join('');
+                tagsList.innerHTML = tagsVal.split(',').map(t => t.trim()).filter(t => t.length > 0).map(t => `<span>#${t}</span>`).join('');
                 tagsBlock.style.display = 'block';
             } else {
                 tagsBlock.style.display = 'none';
             }
-
             document.getElementById('previewModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         });
