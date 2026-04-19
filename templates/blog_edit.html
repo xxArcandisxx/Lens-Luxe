@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Post - Lens&Luxe</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -34,9 +35,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="image">Append High-Res Photograph(s) (Optional)</label>
-                        <input type="file" id="image" name="image" multiple accept="image/png, image/jpeg, image/jpg, image/gif" style="border: 1px solid #ccc; padding: 10px; width: 100%;">
-                        <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display:block;">Leave blank if you don't want to add new images</small>
+                        <label for="image">Replace Cover Image (Optional)</label>
+                        <input type="file" id="image" name="image" accept="image/png, image/jpeg, image/jpg, image/gif" style="border: 1px solid #ccc; padding: 10px; width: 100%;">
+                        <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display:block;">Leave blank to keep existing cover</small>
                     </div>
 
                     <div class="form-group">
@@ -45,8 +46,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="content">Description</label>
-                        <textarea id="content" name="content" required rows="10" style="width: 100%; padding: 10px; border: 1px solid #ccc; font-family: inherit; resize: vertical;">{{ post.content }}</textarea>
+                        <label for="content">Article Body</label>
+                        <input type="hidden" id="content" name="content">
+                        <div id="editor-container" style="height: 400px; background: white; font-family: inherit; font-size: 1.1rem; border: 1px solid #ccc;">{{ post.content | safe }}</div>
                     </div>
 
                     <button type="submit" class="submit-btn" style="background-color: #5a1020; color: white;">Save Changes</button>
@@ -56,9 +58,54 @@
         </div>
     </section>
 
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['image'] // Just images for now
+                ]
+            }
+        });
+
+        quill.getModule('toolbar').addHandler('image', () => {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
+            input.onchange = async () => {
+                const file = input.files[0];
+                if (/^image\//.test(file.type)) {
+                    const fd = new FormData();
+                    fd.append('image', file);
+                    try {
+                        const response = await fetch("{{ url_for('upload_image') }}", {
+                            method: 'POST',
+                            body: fd
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.url) {
+                            const range = quill.getSelection(true);
+                            quill.insertEmbed(range.index, 'image', data.url);
+                        } else {
+                            alert('Upload failed: ' + (data.error || 'Unknown error'));
+                        }
+                    } catch (err) {
+                        alert('Upload error.');
+                    }
+                }
+            };
+        });
+
         document.getElementById('editPostForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Sync quill editor html to hidden input
+            const html = quill.root.innerHTML;
+            document.getElementById('content').value = html === '<p><br></p>' ? '' : html;
+            
             const form = e.target;
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;

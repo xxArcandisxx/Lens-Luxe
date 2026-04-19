@@ -27,6 +27,17 @@
     </nav>
 
     <div style="max-width: 900px; margin: 120px auto 60px; padding: 0 20px;">
+        <!-- Cover Image -->
+        {% if post.image %}
+        <div style="margin-bottom: 40px; text-align: center;">
+            {% if 'http' in post.image %}
+                <img src="{{ post.image }}" alt="{{ post.title }}" style="max-width: 100%; height: auto; max-height: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 8px;">
+            {% else %}
+                <img src="{{ url_for('static', filename='uploads/posts/' + post.image) }}" alt="{{ post.title }}" style="max-width: 100%; height: auto; max-height: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 8px;">
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Post Header -->
         <div style="text-align: center; margin-bottom: 40px;">
             <p style="color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">{{ post.created_at.strftime('%B %d, %Y') }}</p>
@@ -43,28 +54,11 @@
             {% endif %}
         </div>
 
-        <!-- Post Images Gallery -->
-        {% if post.image %}
-        <div style="margin-bottom: 60px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; align-items: center;">
-                {% for img in post.image.split(',') %}
-                    {% set img = img|trim %}
-                    {% if img %}
-                        <div style="overflow: hidden; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.12); transition: transform 0.3s ease;">
-                            {% if 'http' in img %}
-                                <img src="{{ img }}" alt="{{ post.title }}" style="width: 100%; height: auto; display: block; border-radius: 12px; transition: transform 0.5s ease;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='uploads/posts/' + img) }}" alt="{{ post.title }}" style="width: 100%; height: auto; display: block; border-radius: 12px; transition: transform 0.5s ease;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
         <!-- Content -->
-        <div style="font-size: 1.15rem; line-height: 1.8; color: #444; margin-bottom: 50px; white-space: pre-wrap;">{{ post.content }}</div>
+        <style>
+            .blog-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px auto; display: block; }
+        </style>
+        <div class="blog-content" style="font-size: 1.15rem; line-height: 1.8; color: #444; margin-bottom: 50px;">{{ post.content | safe }}</div>
 
         <!-- Tags -->
         {% if post.tags %}

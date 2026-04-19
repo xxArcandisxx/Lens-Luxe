@@ -501,8 +501,24 @@ def user_status():
     return jsonify({'logged_in': False})
 
 # ===========================
+# ===========================
 # BLOG ROUTES
 # ===========================
+
+@app.route('/api/upload_image', methods=['POST'])
+@login_required
+def upload_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+    file = request.files['image']
+    if file and file.filename:
+        filename = save_post_picture(file)
+        if filename:
+            if filename.startswith('http'):
+                return jsonify({'url': filename}), 200
+            else:
+                return jsonify({'url': url_for('static', filename='uploads/posts/' + filename)}), 200
+    return jsonify({'error': 'Failed to upload image'}), 500
 
 @app.route('/blog')
 def blog():
@@ -524,15 +540,11 @@ def blog_create():
             
         image_filename = None
         if 'image' in request.files:
-            files = request.files.getlist('image')
-            image_filenames = []
-            for file in files:
-                if file and file.filename:
-                    filename = save_post_picture(file)
-                    if filename:
-                        image_filenames.append(filename)
-            if image_filenames:
-                image_filename = ",".join(image_filenames)
+            file = request.files['image']
+            if file and file.filename:
+                image_filename = save_post_picture(file)
+                if not image_filename:
+                    return jsonify({'error': 'Invalid image file type'}), 400
         
         post = Post(title=title, content=content, image=image_filename, tags=tags, user_id=user.id)
         try:
@@ -578,20 +590,15 @@ def blog_edit(post_id):
         post.tags = request.form.get('tags', post.tags)
         
         if 'image' in request.files:
-            files = request.files.getlist('image')
-            image_filenames = []
-            for file in files:
-                if file and file.filename:
-                    filename = save_post_picture(file)
-                    if filename:
-                        image_filenames.append(filename)
-                        
-            if image_filenames:
-                new_images_str = ",".join(image_filenames)
-                if post.image:
-                    post.image = post.image + "," + new_images_str
-                else:
-                    post.image = new_images_str
+            file = request.files['image']
+            if file and file.filename:
+                if post.image and not ',' in post.image:
+                    old_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], post.image)
+                    if not post.image.startswith('http') and os.path.exists(old_path):
+                        os.remove(old_path)
+                image_filename = save_post_picture(file)
+                if image_filename:
+                    post.image = image_filename
         
         db.session.commit()
         return jsonify({'success': True, 'message': 'Post updated!', 'redirect': url_for('blog_post', post_id=post.id)}), 200
