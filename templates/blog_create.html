@@ -73,33 +73,26 @@
         var AlignStyle = Quill.import('attributors/style/align');
         Quill.register(AlignStyle, true);
 
+        // Register custom smiley-face icon into Quill's native icon system
+        var icons = Quill.import('ui/icons');
+        icons['emoji'] = '<svg viewbox="0 0 18 18"><circle class="ql-stroke" cx="9" cy="9" r="7.5"/><circle cx="6.5" cy="7.5" r="1" class="ql-fill"/><circle cx="11.5" cy="7.5" r="1" class="ql-fill"/><path class="ql-stroke" d="M5.5 10.5Q9 13.5 12.5 10.5" stroke-linecap="round" fill="none"/></svg>';
+
         var quill = new Quill('#editor-container', {
             theme: 'snow',
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline'],
                     [{ 'align': [] }],
-                    ['image']
+                    ['image'], ['emoji']
                 ]
             },
             placeholder: 'Write your story...'
         });
 
-        const toolbarContainer = quill.getModule('toolbar').container;
-        const emojiBtn = document.createElement('button');
-        emojiBtn.type = 'button';
-        emojiBtn.className = 'ql-custom-emoji';
-        emojiBtn.innerHTML = '😀';
-        emojiBtn.style.fontSize = '1.2rem';
-        emojiBtn.style.padding = '0';
-        emojiBtn.title = 'Insert Emoji';
-        
-        const groups = toolbarContainer.querySelectorAll('.ql-formats');
-        groups[groups.length - 1].appendChild(emojiBtn);
+        // Track the emoji button rendered by Quill
+        const emojiBtn = quill.getModule('toolbar').container.querySelector('.ql-emoji');
 
-        emojiBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        quill.getModule('toolbar').addHandler('emoji', () => {
             const popup = document.getElementById('emojiPopup');
             if (popup.style.display === 'block') {
                 popup.style.display = 'none';
