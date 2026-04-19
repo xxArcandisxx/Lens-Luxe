@@ -26,15 +26,53 @@
             width: 360px;
         }
 
-        /* Preview Modal */
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #5a1020;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            vertical-align: middle;
+        }
+
+        .nav-avatar:hover {
+            transform: scale(1.08);
+            box-shadow: 0 2px 10px rgba(90, 16, 32, 0.3);
+        }
+
+        .nav-avatar-initials {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #5a1020;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #5a1020;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            vertical-align: middle;
+        }
+
+        .nav-avatar-initials:hover {
+            transform: scale(1.08);
+        }
+
         #previewModal {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 10000;
-            background: rgba(0,0,0,0.55);
+            background: rgba(0, 0, 0, 0.55);
             overflow-y: auto;
         }
+
         #previewModal .modal-inner {
             background: #fff;
             max-width: 900px;
@@ -42,11 +80,13 @@
             border-radius: 12px;
             padding: 50px 60px;
             position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
         }
+
         #previewModal .close-btn {
             position: absolute;
-            top: 20px; right: 24px;
+            top: 20px;
+            right: 24px;
             background: none;
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -55,14 +95,61 @@
             font-size: 0.9rem;
             color: #555;
         }
-        #previewModal .close-btn:hover { background: #f5f5f5; }
-        #previewModal .preview-cover { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin-bottom: 32px; }
-        #previewModal .preview-date { color: #999; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; }
-        #previewModal .preview-title { font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: #5a1020; margin: 10px 0 20px; }
-        #previewModal .preview-body { font-size: 1.15rem; line-height: 1.85; color: #444; }
-        #previewModal .preview-body img { max-width: 100%; border-radius: 8px; margin: 16px auto; display: block; }
-        #previewModal .preview-tags { margin-top: 30px; border-top: 1px solid #eee; padding-top: 16px; }
-        #previewModal .preview-tags span { font-size: 0.82rem; background: #f5f5f5; padding: 4px 12px; border-radius: 20px; color: #666; margin-right: 6px; display: inline-block; }
+
+        #previewModal .close-btn:hover {
+            background: #f5f5f5;
+        }
+
+        #previewModal .preview-cover {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 32px;
+        }
+
+        #previewModal .preview-date {
+            color: #999;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #previewModal .preview-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            color: #5a1020;
+            margin: 10px 0 20px;
+        }
+
+        #previewModal .preview-body {
+            font-size: 1.15rem;
+            line-height: 1.85;
+            color: #444;
+        }
+
+        #previewModal .preview-body img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 16px auto;
+            display: block;
+        }
+
+        #previewModal .preview-tags {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 16px;
+        }
+
+        #previewModal .preview-tags span {
+            font-size: 0.82rem;
+            background: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: #666;
+            margin-right: 6px;
+            display: inline-block;
+        }
     </style>
 </head>
 
@@ -76,7 +163,18 @@
                 <li><a href="{{ url_for('home') }}#gallery" class="nav-link">Gallery</a></li>
                 <li><a href="{{ url_for('home') }}#about" class="nav-link">About</a></li>
                 <li><a href="{{ url_for('home') }}#contact" class="nav-link">Contact</a></li>
-                <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                {% if user %}
+                <li>
+                    <a href="{{ url_for('dashboard') }}" title="Go to Dashboard">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture if 'http' in user.profile_picture else url_for('static', filename='uploads/profiles/' + user.profile_picture) }}"
+                            alt="{{ user.first_name }}" class="nav-avatar">
+                        {% else %}
+                        <span class="nav-avatar-initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
@@ -115,8 +213,11 @@
                     </div>
 
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
-                        <button type="button" id="previewBtn" style="background: transparent; border: 2px solid #5a1020; color: #5a1020; padding: 10px 24px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; border-radius: 4px; transition: all 0.2s;">👁 Preview</button>
-                        <button type="submit" class="submit-btn" style="background-color: #5a1020; color: white; flex: 1;">Save Changes</button>
+                        <button type="button" id="previewBtn"
+                            style="background: transparent; border: 2px solid #5a1020; color: #5a1020; padding: 10px 24px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; border-radius: 4px; transition: all 0.2s;">👁
+                            Preview</button>
+                        <button type="submit" class="submit-btn"
+                            style="background-color: #5a1020; color: white; flex: 1;">Save Changes</button>
                     </div>
                     <a href="{{ url_for('blog_post', post_id=post.id) }}"
                         style="display:block; text-align: center; margin-top: 15px; color: #5a1020; text-decoration: none;">Cancel</a>
@@ -125,7 +226,6 @@
         </div>
     </section>
 
-    <!-- Preview Modal -->
     <div id="previewModal">
         <div class="modal-inner">
             <button class="close-btn" id="closePreview">✕ Close Preview</button>
@@ -230,9 +330,13 @@
         document.getElementById('editPostForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Sync quill editor html to hidden input
+            // --- CORRECTION 1: Robust Check for Empty Content ---
             const html = quill.root.innerHTML;
-            document.getElementById('content').value = html === '<p><br></p>' ? '' : html;
+            const textContent = quill.getText().trim(); // Get plain text, trim whitespace
+
+            // Sync quill editor html to hidden input.
+            // If there's no actual text content, treat it as empty.
+            document.getElementById('content').value = textContent.length === 0 ? '' : html;
 
             const form = e.target;
             const submitBtn = form.querySelector('button[type="submit"]');
@@ -271,27 +375,40 @@
 
             document.getElementById('previewBody').innerHTML = quill.root.innerHTML;
 
-            // Cover: use newly selected file, or fall back to existing post cover
+            // --- CORRECTION 2: Refined Cover Image Preview Logic ---
             const coverInput = document.getElementById('image');
             const coverImg = document.getElementById('previewCoverImg');
-            if (coverInput.files && coverInput.files[0]) {
+
+            // Explicitly check for coverInput.files.length > 0 to handle cleared file inputs
+            if (coverInput.files && coverInput.files.length > 0) {
                 const reader = new FileReader();
-                reader.onload = e => { coverImg.src = e.target.result; coverImg.style.display = 'block'; };
+                reader.onload = e => {
+                    coverImg.src = e.target.result;
+                    coverImg.style.display = 'block';
+                };
                 reader.readAsDataURL(coverInput.files[0]);
             } else {
                 {% if post.image %}
+                // Fallback to existing cover image from backend
                 coverImg.src = "{{ post.image if 'http' in post.image else url_for('static', filename='uploads/posts/' + post.image) }}";
                 coverImg.style.display = 'block';
                 {% else %}
+                // No new file, no existing cover. Keep it hidden.
                 coverImg.style.display = 'none';
                 {% endif %}
             }
 
+            // --- CORRECTION 3: Improved Tag Formatting UX ---
             const tagsVal = document.getElementById('tags').value.trim();
             const tagsBlock = document.getElementById('previewTagsBlock');
             const tagsList = document.getElementById('previewTagsList');
             if (tagsVal) {
-                tagsList.innerHTML = tagsVal.split(',').filter(t => t.trim()).map(t => `<span>#${t.trim()}</span>`).join('');
+                tagsList.innerHTML = tagsVal
+                    .split(',')
+                    .map(t => t.trim())              // Trim spaces from each tag
+                    .filter(t => t.length > 0)       // Remove completely empty tags
+                    .map(t => `<span>#${t}</span>`)  // Add # only to valid tags
+                    .join('');
                 tagsBlock.style.display = 'block';
             } else {
                 tagsBlock.style.display = 'none';
