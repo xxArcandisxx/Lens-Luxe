@@ -81,9 +81,10 @@ class User(db.Model):
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     posts = db.relationship('Post', backref='author', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('Comment', backref='author', lazy=True, cascade="all, delete-orphan")
+    tip_votes = db.relationship('TipVote', backref='user', lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -124,6 +125,15 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class TipVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    tip_id = db.Column(db.Integer, db.ForeignKey('tip.id'), nullable=False)
+    vote_type = db.Column(db.String(10), nullable=False)  # 'like' or 'dislike'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'tip_id', name='unique_user_tip_vote'),)
+
 class Tip(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -134,6 +144,7 @@ class Tip(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     author = db.relationship('User', backref='tips')
+    votes = db.relationship('TipVote', backref='tip', lazy=True, cascade="all, delete-orphan")
 
 # ===========================
 # LOGIN REQUIRED DECORATOR
@@ -667,7 +678,33 @@ def tips():
         tips_list = Tip.query.filter_by(category=category).order_by(Tip.created_at.desc()).all()
     else:
         tips_list = Tip.query.order_by(Tip.created_at.desc()).all()
+
     user = User.query.get(session['user_id']) if 'user_id' in session else None
+
+    # Try to load subtitle for each tip
+    try:
+        from sqlalchemy import text
+        for tip in tips_list:
+            try:
+                result = db.session.execute(text("SELECT subtitle FROM tip WHERE id = :id"), {"id": tip.id}).first()
+                tip.subtitle = result[0] if result and result[0] else (tip.content[:150] + '...')
+            except:
+                tip.subtitle = tip.content[:150] + '...'
+    except:
+        # If subtitle column doesn't exist, use content excerpt
+        for tip in tips_list:
+            tip.subtitle = tip.content[:150] + '...'
+
+    # Add vote counts to each tip
+    for tip in tips_list:
+        tip.like_count = len([v for v in tip.votes if v.vote_type == 'like'])
+        tip.dislike_count = len([v for v in tip.votes if v.vote_type == 'dislike'])
+        tip.user_vote = None
+        if user:
+            user_vote = next((v for v in tip.votes if v.user_id == user.id), None)
+            if user_vote:
+                tip.user_vote = user_vote.vote_type
+
     return render_template('tips.html', tips=tips_list, user=user, category=category)
 
 @app.route('/tips/create', methods=['GET', 'POST'])
@@ -676,11 +713,15 @@ def tips_create():
     user = User.query.get(session['user_id'])
     if request.method == 'POST':
         title = request.form.get('title')
+        subtitle = request.form.get('subtitle', '')
         content = request.form.get('content')
         category = request.form.get('category')
 
         if not title or not content or not category:
             return jsonify({'error': 'Title, content, and category are required'}), 400
+
+        if not subtitle:
+            return jsonify({'error': 'Subtitle is required'}), 400
 
         if category not in ['fashion', 'photography']:
             return jsonify({'error': 'Invalid category'}), 400
@@ -694,8 +735,19 @@ def tips_create():
                     return jsonify({'error': 'Invalid image file type'}), 400
 
         tip = Tip(title=title, content=content, category=category, image=image_filename, user_id=user.id)
+
         try:
             db.session.add(tip)
+            db.session.flush()  # Get the ID without committing
+
+            # Try to set subtitle if column exists
+            try:
+                from sqlalchemy import text
+                db.session.execute(text(f"UPDATE tip SET subtitle = :subtitle WHERE id = :id"),
+                                 {"subtitle": subtitle, "id": tip.id})
+            except:
+                pass  # Column might not exist yet
+
             db.session.commit()
             return jsonify({'success': True, 'message': 'Tip published successfully!', 'redirect': url_for('tips')}), 200
         except Exception as e:
@@ -721,6 +773,7 @@ def tips_edit(tip_id):
 
     if request.method == 'POST':
         tip.title = request.form.get('title', tip.title)
+        subtitle = request.form.get('subtitle', '')
         tip.content = request.form.get('content', tip.content)
         category = request.form.get('category')
         if category in ['fashion', 'photography']:
@@ -737,8 +790,21 @@ def tips_edit(tip_id):
                 if image_filename:
                     tip.image = image_filename
 
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Tip updated!', 'redirect': url_for('tips_view', tip_id=tip.id)}), 200
+        try:
+            # Try to update subtitle if column exists
+            if subtitle:
+                try:
+                    from sqlalchemy import text
+                    db.session.execute(text("UPDATE tip SET subtitle = :subtitle WHERE id = :id"),
+                                     {"subtitle": subtitle, "id": tip.id})
+                except:
+                    pass  # Column might not exist yet
+
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Tip updated!', 'redirect': url_for('tips_view', tip_id=tip.id)}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to update tip'}), 500
 
     return render_template('tips_edit.html', tip=tip, user=user)
 
@@ -758,6 +824,49 @@ def tips_delete(tip_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Tip deleted', 'redirect': url_for('tips')}), 200
 
+@app.route('/tips/<int:tip_id>/vote', methods=['POST'])
+@login_required
+def tip_vote(tip_id):
+    tip = Tip.query.get_or_404(tip_id)
+    user_id = session['user_id']
+    data = request.get_json()
+    vote_type = data.get('vote_type')
+
+    if vote_type not in ['like', 'dislike']:
+        return jsonify({'error': 'Invalid vote type'}), 400
+
+    # Check if user already voted
+    existing_vote = TipVote.query.filter_by(user_id=user_id, tip_id=tip_id).first()
+
+    if existing_vote:
+        # If same vote type, remove it (toggle off)
+        if existing_vote.vote_type == vote_type:
+            db.session.delete(existing_vote)
+        else:
+            # Change vote type
+            existing_vote.vote_type = vote_type
+    else:
+        # Create new vote
+        new_vote = TipVote(user_id=user_id, tip_id=tip_id, vote_type=vote_type)
+        db.session.add(new_vote)
+
+    db.session.commit()
+
+    # Get updated counts
+    like_count = len([v for v in tip.votes if v.vote_type == 'like'])
+    dislike_count = len([v for v in tip.votes if v.vote_type == 'dislike'])
+
+    # Get user's current vote
+    user_vote = TipVote.query.filter_by(user_id=user_id, tip_id=tip_id).first()
+    user_vote_type = user_vote.vote_type if user_vote else None
+
+    return jsonify({
+        'success': True,
+        'likes': like_count,
+        'dislikes': dislike_count,
+        'user_vote': user_vote_type
+    }), 200
+
 # ===========================
 # ERROR HANDLERS
 # ===========================
@@ -770,6 +879,21 @@ def not_found(error):
 
 with app.app_context():
     db.create_all()
+
+    # Add subtitle column to existing tips if it doesn't exist
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        tip_columns = [col['name'] for col in inspector.get_columns('tip')]
+
+        if 'subtitle' not in tip_columns:
+            print("Adding subtitle column to tip table...")
+            with db.engine.connect() as conn:
+                conn.execute(text('ALTER TABLE tip ADD COLUMN subtitle VARCHAR(500) DEFAULT \'\''))
+                conn.commit()
+            print("Successfully added subtitle column")
+    except Exception as e:
+        print(f"Migration note: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

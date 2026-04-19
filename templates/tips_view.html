@@ -13,6 +13,10 @@
 
         <h1 class="tip-view-title">{{ tip.title }}</h1>
 
+        {% if tip.subtitle %}
+            <div class="tip-view-subtitle">{{ tip.subtitle }}</div>
+        {% endif %}
+
         <div class="tip-info">
             <div class="tip-author-info">
                 {% if tip.author.profile_picture %}
@@ -28,6 +32,39 @@
                     <div class="author-date">{{ tip.created_at.strftime('%B %d, %Y') }}</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Vote Section -->
+        <div class="tip-view-vote-section">
+            {% set like_count = tip.votes | selectattr('vote_type', 'equalto', 'like') | list | length %}
+            {% set dislike_count = tip.votes | selectattr('vote_type', 'equalto', 'dislike') | list | length %}
+            {% set user_vote = None %}
+            {% if user %}
+                {% for vote in tip.votes %}
+                    {% if vote.user_id == user.id %}
+                        {% set user_vote = vote.vote_type %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            <button class="vote-button-lg {% if user_vote == 'like' %}active{% endif %}"
+                    onclick="handleVoteDetail({{ tip.id }}, 'like')"
+                    {% if not user %}disabled{% endif %}>
+                <span class="vote-icon">👍</span>
+                <span class="vote-count-lg" id="like-count-detail-{{ tip.id }}">{{ like_count }}</span>
+                <span class="vote-label">Like</span>
+            </button>
+            <button class="vote-button-lg {% if user_vote == 'dislike' %}active{% endif %}"
+                    onclick="handleVoteDetail({{ tip.id }}, 'dislike')"
+                    {% if not user %}disabled{% endif %}>
+                <span class="vote-icon">👎</span>
+                <span class="vote-count-lg" id="dislike-count-detail-{{ tip.id }}">{{ dislike_count }}</span>
+                <span class="vote-label">Dislike</span>
+            </button>
+            <button class="share-button-lg" onclick="sharePost('{{ tip.title }}', '{{ request.base_url }}')">
+                <span class="share-icon">📤</span>
+                <span class="vote-label">Share</span>
+            </button>
         </div>
     </div>
 
@@ -49,6 +86,59 @@
 </div>
 
 <script>
+    function handleVoteDetail(tipId, voteType) {
+        {% if user %}
+            fetch(`/tips/${tipId}/vote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ vote_type: voteType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update counts
+                    document.getElementById(`like-count-detail-${tipId}`).textContent = data.likes;
+                    document.getElementById(`dislike-count-detail-${tipId}`).textContent = data.dislikes;
+
+                    // Update button states
+                    const voteButtons = document.querySelectorAll('.vote-button-lg');
+                    voteButtons.forEach(btn => btn.classList.remove('active'));
+
+                    if (data.user_vote) {
+                        const button = event.target.closest('button');
+                        if (button) {
+                            button.classList.add('active');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to save vote');
+            });
+        {% else %}
+            alert('Please log in to vote');
+        {% endif %}
+    }
+
+    function sharePost(title, url) {
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                url: url
+            }).catch(err => console.log('Error sharing:', err));
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+    }
+
     function deleteTip(tipId) {
         if (confirm('Are you sure you want to delete this tip? This action cannot be undone.')) {
             fetch(`/tips/${tipId}/delete`, {
