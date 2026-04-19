@@ -173,29 +173,34 @@
             placeholder: 'Write your story...'
         });
 
-        // Track the emoji button rendered by Quill
+        // Direct click on the Quill-rendered emoji button
         const emojiBtn = quill.getModule('toolbar').container.querySelector('.ql-emoji');
+        if (emojiBtn) {
+            emojiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const popup = document.getElementById('emojiPopup');
+                if (popup.style.display === 'block') {
+                    popup.style.display = 'none';
+                } else {
+                    const rect = emojiBtn.getBoundingClientRect();
+                    popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+                    popup.style.left = rect.left + 'px';
+                    popup.style.display = 'block';
+                }
+            });
+        }
 
-        quill.getModule('toolbar').addHandler('emoji', () => {
-            const popup = document.getElementById('emojiPopup');
-            if (popup.style.display === 'block') {
-                popup.style.display = 'none';
-            } else {
-                const rect = emojiBtn.getBoundingClientRect();
-                popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-                popup.style.left = rect.left + 'px';
-                popup.style.display = 'block';
-            }
-        });
-
-        document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
-            const range = quill.getSelection(true);
-            quill.insertText(range ? range.index : quill.getLength(), event.detail.unicode);
+        // Wait for emoji-picker-element custom element to be registered before attaching
+        customElements.whenDefined('emoji-picker').then(() => {
+            document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
+                const range = quill.getSelection(true);
+                quill.insertText(range ? range.index : quill.getLength(), event.detail.unicode);
+            });
         });
 
         document.addEventListener('click', function (e) {
             const popup = document.getElementById('emojiPopup');
-            if (popup.style.display === 'block' && !popup.contains(e.target) && !emojiBtn.contains(e.target)) {
+            if (popup.style.display === 'block' && !popup.contains(e.target) && emojiBtn && !emojiBtn.contains(e.target)) {
                 popup.style.display = 'none';
             }
         });
