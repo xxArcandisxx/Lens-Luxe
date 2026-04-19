@@ -23,7 +23,7 @@
 
         <!-- Post Header -->
         <div style="text-align: center; margin-bottom: 40px;">
-            <p style="color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">{{ post.created_at.strftime('%B % d, % Y') }}</p>
+            <p style="color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">{{ post.created_at.strftime('%B %d, %Y') }}</p>
             <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; color: #5a1020; margin: 10px 0;">{{ post.title }}</h1>
             <p style="font-size: 1.1rem; color: #333;">By <span style="font-style: italic;">{{ post.author.first_name }} {{ post.author.last_name }}</span></p>
             
@@ -73,7 +73,7 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <strong style="color: #333;">{{ comment.author.first_name }} {{ comment.author.last_name }}</strong>
                         <div style="display:flex; gap: 10px; align-items:center;">
-                            <span style="color: #999; font-size: 0.85rem;">{{ comment.created_at.strftime('%B % d, % Y % H:% M') }}</span>
+                            <span style="color: #999; font-size: 0.85rem;">{{ comment.created_at.strftime('%B %d, %Y %H:%M') }}</span>
                             {% if user and comment.user_id == user.id %}
                                 <form action="{{ url_for('comment_delete', comment_id=comment.id) }}" method="POST">
                                     <button type="submit" style="background: none; border: none; color: #cc0000; font-size: 0.8rem; cursor: pointer;" onclick="return confirm('Delete this comment?');">Delete</button>
