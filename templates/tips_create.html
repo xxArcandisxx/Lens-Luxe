@@ -2,167 +2,11 @@
 
 {% block title %}Create Tip - Lens&Luxe{% endblock %}
 
-{% block styles %}
-<style>
-    .create-tip-container {
-        max-width: 800px;
-        margin: 60px auto;
-        padding: 0 20px;
-    }
-
-    .create-tip-header {
-        margin-bottom: 40px;
-    }
-
-    .create-tip-header h1 {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 2.5rem;
-        color: #2c2c2c;
-        margin-bottom: 10px;
-    }
-
-    .create-tip-form {
-        background: white;
-        padding: 40px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    .form-group {
-        margin-bottom: 25px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #2c2c2c;
-    }
-
-    .form-group input[type="text"],
-    .form-group select,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 0.95rem;
-        font-family: inherit;
-    }
-
-    .form-group textarea {
-        resize: vertical;
-        min-height: 300px;
-        line-height: 1.6;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: #5a1020;
-        box-shadow: 0 0 0 3px rgba(90, 16, 32, 0.1);
-    }
-
-    .form-group select {
-        cursor: pointer;
-    }
-
-    .image-upload {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .image-upload input[type="file"] {
-        display: none;
-    }
-
-    .upload-btn {
-        padding: 10px 20px;
-        background: #f0f0f0;
-        border: 2px dashed #ddd;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .upload-btn:hover {
-        background: #fafafa;
-        border-color: #5a1020;
-    }
-
-    .image-preview {
-        width: 150px;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 5px;
-        display: none;
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
-    }
-
-    .btn {
-        padding: 12px 30px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.95rem;
-        transition: all 0.3s;
-    }
-
-    .btn-primary {
-        background: #5a1020;
-        color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-        background: #3d0814;
-    }
-
-    .btn-secondary {
-        background: #e0e0e0;
-        color: #333;
-    }
-
-    .btn-secondary:hover {
-        background: #d0d0d0;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .error-message {
-        padding: 12px;
-        background: #fee;
-        color: #c41e3a;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        display: none;
-    }
-
-    .success-message {
-        padding: 12px;
-        background: #efe;
-        color: #2d7a3d;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        display: none;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="create-tip-container">
     <div class="create-tip-header">
         <h1>Share Your Tip</h1>
-        <p style="color: #666; margin-top: 10px;">Help the community with your fashion or photography knowledge</p>
+        <p class="subtitle">Help the community with your fashion or photography knowledge</p>
     </div>
 
     <form class="create-tip-form" id="tipsForm">
@@ -194,14 +38,14 @@
                 <button type="button" class="upload-btn" onclick="document.getElementById('imageInput').click()">
                     Choose Image
                 </button>
-                <input type="file" id="imageInput" name="image" accept="image/*">
+                <input type="file" id="imageInput" name="image" accept="image/*" aria-label="Upload tip image">
                 <img id="imagePreview" class="image-preview" alt="Preview">
             </div>
         </div>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Publish Tip</button>
-            <a href="{{ url_for('tips') }}" class="btn btn-secondary" style="text-decoration: none; text-align: center;">Cancel</a>
+            <a href="{{ url_for('tips') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
