@@ -6,8 +6,11 @@
     <title>Create Post - Lens&Luxe</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/quill-emoji@0.2.0/dist/quill-emoji.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .emoji-popup { display: none; position: absolute; z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 8px; background-color: #ffffff; }
+        emoji-picker { --num-columns: 8; --emoji-size: 1.6rem; height: 420px; width: 360px; }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -60,8 +63,12 @@
         </div>
     </section>
 
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.21.3/index.js"></script>
+    <div class="emoji-popup" id="emojiPopup">
+        <emoji-picker></emoji-picker>
+    </div>
+
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill-emoji@0.2.0/dist/quill-emoji.js"></script>
     <script>
         var AlignStyle = Quill.import('attributors/style/align');
         Quill.register(AlignStyle, true);
@@ -72,14 +79,48 @@
                 toolbar: [
                     ['bold', 'italic', 'underline'],
                     [{ 'align': [] }],
-                    ['image'],
-                    ['emoji']
-                ],
-                "emoji-toolbar": true,
-                "emoji-textarea": false,
-                "emoji-shortname": true
+                    ['image']
+                ]
             },
             placeholder: 'Write your story...'
+        });
+
+        const toolbarContainer = quill.getModule('toolbar').container;
+        const emojiBtn = document.createElement('button');
+        emojiBtn.type = 'button';
+        emojiBtn.className = 'ql-custom-emoji';
+        emojiBtn.innerHTML = '😀';
+        emojiBtn.style.fontSize = '1.2rem';
+        emojiBtn.style.padding = '0';
+        emojiBtn.title = 'Insert Emoji';
+        
+        const groups = toolbarContainer.querySelectorAll('.ql-formats');
+        groups[groups.length - 1].appendChild(emojiBtn);
+
+        emojiBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const popup = document.getElementById('emojiPopup');
+            if (popup.style.display === 'block') {
+                popup.style.display = 'none';
+            } else {
+                const rect = emojiBtn.getBoundingClientRect();
+                popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+                popup.style.left = rect.left + 'px';
+                popup.style.display = 'block';
+            }
+        });
+
+        document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
+            const range = quill.getSelection(true);
+            quill.insertText(range ? range.index : quill.getLength(), event.detail.unicode);
+        });
+
+        document.addEventListener('click', function(e) {
+            const popup = document.getElementById('emojiPopup');
+            if (popup.style.display === 'block' && !popup.contains(e.target) && !emojiBtn.contains(e.target)) {
+                popup.style.display = 'none';
+            }
         });
 
         quill.getModule('toolbar').addHandler('image', () => {
