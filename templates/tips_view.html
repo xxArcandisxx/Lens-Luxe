@@ -50,19 +50,19 @@
             <button class="vote-button-lg {% if user_vote == 'like' %}active{% endif %}"
                     onclick="handleVoteDetail({{ tip.id }}, 'like')"
                     {% if not user %}disabled{% endif %}>
-                <span class="vote-icon">👍</span>
+                <span class="vote-icon"><i class="fas fa-thumbs-up"></i></span>
                 <span class="vote-count-lg" id="like-count-detail-{{ tip.id }}">{{ like_count }}</span>
                 <span class="vote-label">Like</span>
             </button>
             <button class="vote-button-lg {% if user_vote == 'dislike' %}active{% endif %}"
                     onclick="handleVoteDetail({{ tip.id }}, 'dislike')"
                     {% if not user %}disabled{% endif %}>
-                <span class="vote-icon">👎</span>
+                <span class="vote-icon"><i class="fas fa-thumbs-down"></i></span>
                 <span class="vote-count-lg" id="dislike-count-detail-{{ tip.id }}">{{ dislike_count }}</span>
                 <span class="vote-label">Dislike</span>
             </button>
             <button class="share-button-lg" onclick="sharePost('{{ tip.title }}', '{{ request.base_url }}')">
-                <span class="share-icon">📤</span>
+                <span class="share-icon"><i class="fas fa-share-alt"></i></span>
                 <span class="vote-label">Share</span>
             </button>
         </div>

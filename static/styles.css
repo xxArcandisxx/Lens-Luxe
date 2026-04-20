@@ -963,8 +963,8 @@ body {
 }
 
 .vote-button.active {
-    background: #e8f5e9;
-    color: #2d7a3d;
+    background: #f5e8eb;
+    color: var(--primary);
 }
 
 .vote-button:disabled {
@@ -973,7 +973,10 @@ body {
 }
 
 .vote-icon {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .vote-count {
@@ -1003,7 +1006,10 @@ body {
 }
 
 .share-icon {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .view-tip-link {
@@ -1408,9 +1414,9 @@ body {
 }
 
 .vote-button-lg.active {
-    border-color: #2d7a3d;
-    background: #e8f5e9;
-    color: #2d7a3d;
+    border-color: var(--primary);
+    background: #f5e8eb;
+    color: var(--primary);
 }
 
 .vote-button-lg:disabled {
