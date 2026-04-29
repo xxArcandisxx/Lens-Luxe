@@ -2,6 +2,182 @@
 
 {% block title %}{{ tip.title }} - Tips - Lens&Luxe{% endblock %}
 
+{% block styles %}
+    <style>
+        /* Tip Comments */
+        .tip-comments-section {
+            background: #fdfafb;
+            padding: 40px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+        .tip-comments-section h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: #5a1020;
+            margin-bottom: 30px;
+        }
+        .comment-form textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .comment-form button {
+            background-color: #5a1020;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            transition: background 0.2s;
+        }
+        .comment-form button:hover { background-color: #3d0b16; }
+        .comment-form button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .comment-item {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            margin-bottom: 12px;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .comment-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
+        }
+        .comment-avatar-fallback {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #5a1020;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .comment-author-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+        .comment-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .comment-date { color: #999; font-size: 0.8rem; }
+        .comment-delete-btn {
+            background: none;
+            border: none;
+            color: #cc0000;
+            font-size: 0.78rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .comment-delete-btn:hover { text-decoration: underline; }
+        .comment-body {
+            color: #555;
+            white-space: pre-wrap;
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .comment-actions {
+            margin-top: 10px;
+        }
+        .reply-btn {
+            background: none;
+            border: none;
+            color: #5a1020;
+            font-size: 0.82rem;
+            cursor: pointer;
+            padding: 0;
+            font-weight: 600;
+        }
+        .reply-btn:hover { text-decoration: underline; }
+
+        /* Reply form */
+        .reply-form-container {
+            margin-top: 12px;
+            display: none;
+        }
+        .reply-form-container textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 60px;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .reply-form-container .reply-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .reply-form-container .reply-submit {
+            background-color: #5a1020;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .reply-form-container .reply-submit:hover { background-color: #3d0b16; }
+        .reply-form-container .reply-cancel {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Nested replies */
+        .comment-replies {
+            margin-left: 30px;
+            margin-top: 12px;
+            border-left: 2px solid #f0e0e4;
+            padding-left: 16px;
+        }
+        .comment-replies .comment-item {
+            background: #faf8f9;
+        }
+
+        .no-comments {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="tip-view-container">
     <a href="{{ url_for('tips') }}" class="back-link">← Back to Tips</a>
@@ -94,34 +270,94 @@
             <span class="vote-label">Share</span>
         </button>
     </div>
+
+    <!-- Comments Section -->
+    <div class="tip-comments-section">
+        {% set top_level_comments = tip.comments | selectattr('parent_id', 'none') | list %}
+        <h3>Comments ({{ tip.comments | length }})</h3>
+
+        {% if user %}
+        <div class="comment-form" style="margin-bottom: 40px;">
+            <textarea id="commentInput" placeholder="Leave a comment..." required></textarea>
+            <button id="submitCommentBtn" onclick="submitComment()">Post Comment</button>
+        </div>
+        {% else %}
+        <p style="margin-bottom: 40px; color: #666;">Please <a href="{{ url_for('login') }}" style="color: #5a1020;">log in</a> to leave a comment.</p>
+        {% endif %}
+
+        <div id="commentsContainer">
+            {% macro render_comment(comment, depth=0) %}
+            <div class="comment-item" id="comment-{{ comment.id }}">
+                <div class="comment-header">
+                    <div class="comment-author">
+                        {% if comment.author.profile_picture %}
+                            <img src="{{ comment.author.profile_picture if comment.author.profile_picture.startswith('http') else url_for('static', filename='uploads/profiles/' + comment.author.profile_picture) }}"
+                                 alt="{{ comment.author.first_name }}" class="comment-avatar">
+                        {% else %}
+                            <div class="comment-avatar-fallback">{{ comment.author.first_name[0] }}{{ comment.author.last_name[0] }}</div>
+                        {% endif %}
+                        <span class="comment-author-name">{{ comment.author.first_name }} {{ comment.author.last_name }}</span>
+                    </div>
+                    <div class="comment-meta">
+                        <span class="comment-date">{{ comment.created_at.strftime('%B %d, %Y %H:%M') }}</span>
+                        {% if user and comment.user_id == user.id %}
+                            <button class="comment-delete-btn" onclick="deleteComment({{ comment.id }})">Delete</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="comment-body">{{ comment.content }}</p>
+                {% if user %}
+                <div class="comment-actions">
+                    <button class="reply-btn" onclick="toggleReplyForm({{ comment.id }})">↩ Reply</button>
+                </div>
+                <div class="reply-form-container" id="reply-form-{{ comment.id }}">
+                    <textarea id="reply-input-{{ comment.id }}" placeholder="Write a reply..."></textarea>
+                    <div class="reply-actions">
+                        <button class="reply-submit" onclick="submitReply({{ comment.id }})">Reply</button>
+                        <button class="reply-cancel" onclick="toggleReplyForm({{ comment.id }})">Cancel</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% if comment.replies %}
+                <div class="comment-replies">
+                    {% for reply in comment.replies %}
+                        {{ render_comment(reply, depth + 1) }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endmacro %}
+
+            {% for comment in top_level_comments %}
+                {{ render_comment(comment) }}
+            {% else %}
+                <p class="no-comments" id="noCommentsMsg">No comments yet. Be the first to start the conversation!</p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
 <script>
+    const TIP_ID = {{ tip.id }};
+    const CURRENT_USER_ID = {{ user.id if user else 'null' }};
+
     function handleVoteDetail(tipId, voteType) {
         {% if user %}
             fetch(`/tips/${tipId}/vote`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vote_type: voteType })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update counts
                     document.getElementById(`like-count-detail-${tipId}`).textContent = data.likes;
                     document.getElementById(`dislike-count-detail-${tipId}`).textContent = data.dislikes;
-
-                    // Update button states
                     const voteButtons = document.querySelectorAll('.vote-button-lg');
                     voteButtons.forEach(btn => btn.classList.remove('active'));
-
                     if (data.user_vote) {
                         const button = event.target.closest('button');
-                        if (button) {
-                            button.classList.add('active');
-                        }
+                        if (button) button.classList.add('active');
                     }
                 }
             })
@@ -136,17 +372,11 @@
 
     function sharePost(title, url) {
         if (navigator.share) {
-            navigator.share({
-                title: title,
-                url: url
-            }).catch(err => console.log('Error sharing:', err));
+            navigator.share({ title: title, url: url }).catch(err => console.log('Error sharing:', err));
         } else {
-            // Fallback: copy to clipboard
             navigator.clipboard.writeText(url).then(() => {
                 alert('Link copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-            });
+            }).catch(err => console.error('Failed to copy:', err));
         }
     }
 
@@ -154,9 +384,7 @@
         if (confirm('Are you sure you want to delete this tip? This action cannot be undone.')) {
             fetch(`/tips/${tipId}/delete`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(data => {
@@ -171,6 +399,144 @@
                 alert('An error occurred while deleting the tip.');
             });
         }
+    }
+
+    // --- Comments ---
+    function submitComment() {
+        const input = document.getElementById('commentInput');
+        const content = input.value.trim();
+        if (!content) return;
+
+        const btn = document.getElementById('submitCommentBtn');
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        fetch(`/tips/${TIP_ID}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Remove "no comments" message
+                const noMsg = document.getElementById('noCommentsMsg');
+                if (noMsg) noMsg.remove();
+
+                const container = document.getElementById('commentsContainer');
+                container.insertAdjacentHTML('beforeend', buildCommentHTML(data.comment));
+                input.value = '';
+            } else {
+                alert(data.error || 'Failed to post comment');
+            }
+            btn.disabled = false;
+            btn.textContent = 'Post Comment';
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error posting comment');
+            btn.disabled = false;
+            btn.textContent = 'Post Comment';
+        });
+    }
+
+    function toggleReplyForm(commentId) {
+        const form = document.getElementById(`reply-form-${commentId}`);
+        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function submitReply(parentId) {
+        const input = document.getElementById(`reply-input-${parentId}`);
+        const content = input.value.trim();
+        if (!content) return;
+
+        fetch(`/tips/${TIP_ID}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content, parent_id: parentId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const parentEl = document.getElementById(`comment-${parentId}`);
+                let repliesDiv = parentEl.querySelector('.comment-replies');
+                if (!repliesDiv) {
+                    repliesDiv = document.createElement('div');
+                    repliesDiv.className = 'comment-replies';
+                    parentEl.appendChild(repliesDiv);
+                }
+                repliesDiv.insertAdjacentHTML('beforeend', buildCommentHTML(data.comment));
+                input.value = '';
+                document.getElementById(`reply-form-${parentId}`).style.display = 'none';
+            } else {
+                alert(data.error || 'Failed to post reply');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error posting reply');
+        });
+    }
+
+    function deleteComment(commentId) {
+        if (!confirm('Delete this comment?')) return;
+
+        fetch(`/tips/comment/${commentId}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const el = document.getElementById(`comment-${commentId}`);
+                if (el) el.remove();
+            } else {
+                alert(data.error || 'Failed to delete');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error deleting comment');
+        });
+    }
+
+    function buildCommentHTML(c) {
+        const avatarHTML = c.author_picture
+            ? `<img src="${c.author_picture}" alt="" class="comment-avatar">`
+            : `<div class="comment-avatar-fallback">${c.author_initials}</div>`;
+
+        const deleteBtn = (c.user_id === CURRENT_USER_ID)
+            ? `<button class="comment-delete-btn" onclick="deleteComment(${c.id})">Delete</button>`
+            : '';
+
+        const replyBtn = CURRENT_USER_ID
+            ? `<div class="comment-actions">
+                   <button class="reply-btn" onclick="toggleReplyForm(${c.id})">↩ Reply</button>
+               </div>
+               <div class="reply-form-container" id="reply-form-${c.id}">
+                   <textarea id="reply-input-${c.id}" placeholder="Write a reply..."></textarea>
+                   <div class="reply-actions">
+                       <button class="reply-submit" onclick="submitReply(${c.id})">Reply</button>
+                       <button class="reply-cancel" onclick="toggleReplyForm(${c.id})">Cancel</button>
+                   </div>
+               </div>`
+            : '';
+
+        return `
+        <div class="comment-item" id="comment-${c.id}">
+            <div class="comment-header">
+                <div class="comment-author">
+                    ${avatarHTML}
+                    <span class="comment-author-name">${c.author_name}</span>
+                </div>
+                <div class="comment-meta">
+                    <span class="comment-date">${c.created_at}</span>
+                    ${deleteBtn}
+                </div>
+            </div>
+            <p class="comment-body">${c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            ${replyBtn}
+        </div>`;
     }
 </script>
 {% endblock %}

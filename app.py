@@ -134,6 +134,16 @@ class TipVote(db.Model):
 
     __table_args__ = (db.UniqueConstraint('user_id', 'tip_id', name='unique_user_tip_vote'),)
 
+class TipComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    tip_id = db.Column(db.Integer, db.ForeignKey('tip.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('tip_comment.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    author = db.relationship('User', backref='tip_comments')
+    replies = db.relationship('TipComment', backref=db.backref('parent', remote_side='TipComment.id'), lazy=True, cascade="all, delete-orphan")
+
 class Tip(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -146,6 +156,7 @@ class Tip(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     author = db.relationship('User', backref='tips')
     votes = db.relationship('TipVote', backref='tip', lazy=True, cascade="all, delete-orphan")
+    comments = db.relationship('TipComment', backref='tip', lazy=True, cascade="all, delete-orphan", order_by='TipComment.created_at')
 
 # ===========================
 # LOGIN REQUIRED DECORATOR
@@ -876,6 +887,66 @@ def tip_vote(tip_id):
         'dislikes': dislike_count,
         'user_vote': user_vote_type
     }), 200
+
+@app.route('/tips/<int:tip_id>/comment', methods=['POST'])
+@login_required
+def tip_comment(tip_id):
+    tip = Tip.query.get_or_404(tip_id)
+    data = request.get_json()
+    content = data.get('content', '').strip() if data else ''
+
+    if not content:
+        return jsonify({'error': 'Comment cannot be empty'}), 400
+
+    parent_id = data.get('parent_id', None)
+    if parent_id:
+        parent = TipComment.query.get(parent_id)
+        if not parent or parent.tip_id != tip_id:
+            return jsonify({'error': 'Invalid parent comment'}), 400
+
+    comment = TipComment(
+        content=content,
+        user_id=session['user_id'],
+        tip_id=tip_id,
+        parent_id=parent_id
+    )
+
+    try:
+        db.session.add(comment)
+        db.session.commit()
+        user = User.query.get(session['user_id'])
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': comment.id,
+                'content': comment.content,
+                'author_name': f"{user.first_name} {user.last_name}",
+                'author_initials': f"{user.first_name[0]}{user.last_name[0]}",
+                'author_picture': user.profile_picture or '',
+                'created_at': comment.created_at.strftime('%B %d, %Y %H:%M'),
+                'parent_id': comment.parent_id,
+                'user_id': comment.user_id
+            }
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to post comment'}), 500
+
+@app.route('/tips/comment/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def tip_comment_delete(comment_id):
+    comment = TipComment.query.get_or_404(comment_id)
+    if comment.user_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    tip_id = comment.tip_id
+    try:
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Comment deleted'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete comment'}), 500
 
 # ===========================
 # ERROR HANDLERS
