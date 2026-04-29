@@ -24,7 +24,7 @@
     {% if tips %}
         <div class="tips-list">
             {% for tip in tips %}
-                <div class="tip-post">
+                <div class="tip-post" data-href="{{ url_for('tips_view', tip_id=tip.id) }}" style="cursor: pointer;">
                     <div class="tip-post-header">
                         <div class="tip-post-author">
                             <span class="tip-author-name">{{ tip.author.first_name }} {{ tip.author.last_name }}</span>
@@ -142,5 +142,14 @@ function sharePost(title, url) {
         });
     }
 }
+
+// Make entire tip card clickable
+document.querySelectorAll('.tip-post[data-href]').forEach(card => {
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking a button, link, or interactive element
+        if (e.target.closest('button, a, .vote-button, .share-button')) return;
+        window.location.href = this.dataset.href;
+    });
+});
 </script>
 {% endblock %}
