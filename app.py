@@ -139,6 +139,7 @@ class Tip(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(50), nullable=False)  # 'fashion' or 'photography'
+    tags = db.Column(db.String(500), default='')
     image = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -716,12 +717,16 @@ def tips_create():
         subtitle = request.form.get('subtitle', '')
         content = request.form.get('content')
         category = request.form.get('category')
+        tags = request.form.get('tags', '')
 
         if not title or not content or not category:
             return jsonify({'error': 'Title, content, and category are required'}), 400
 
         if not subtitle:
             return jsonify({'error': 'Subtitle is required'}), 400
+
+        if not tags or not tags.strip():
+            return jsonify({'error': 'Tags are required'}), 400
 
         if category not in ['fashion', 'photography']:
             return jsonify({'error': 'Invalid category'}), 400
@@ -734,7 +739,7 @@ def tips_create():
                 if not image_filename:
                     return jsonify({'error': 'Invalid image file type'}), 400
 
-        tip = Tip(title=title, content=content, category=category, image=image_filename, user_id=user.id)
+        tip = Tip(title=title, content=content, category=category, tags=tags.strip(), image=image_filename, user_id=user.id)
 
         try:
             db.session.add(tip)
@@ -775,9 +780,14 @@ def tips_edit(tip_id):
         tip.title = request.form.get('title', tip.title)
         subtitle = request.form.get('subtitle', '')
         tip.content = request.form.get('content', tip.content)
+        tags = request.form.get('tags', '')
         category = request.form.get('category')
         if category in ['fashion', 'photography']:
             tip.category = category
+
+        if not tags or not tags.strip():
+            return jsonify({'error': 'Tags are required'}), 400
+        tip.tags = tags.strip()
 
         if 'image' in request.files:
             file = request.files['image']
@@ -892,6 +902,19 @@ with app.app_context():
                 conn.execute(text('ALTER TABLE tip ADD COLUMN subtitle VARCHAR(500) DEFAULT \'\''))
                 conn.commit()
             print("Successfully added subtitle column")
+
+        if 'tags' not in tip_columns:
+            print("Adding tags column to tip table...")
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE tip ADD COLUMN tags VARCHAR(500) DEFAULT ''"))
+                conn.commit()
+            print("Successfully added tags column")
+
+        # Backfill existing tips that have no tags with 'tag'
+        with db.engine.connect() as conn:
+            conn.execute(text("UPDATE tip SET tags = 'tag' WHERE tags IS NULL OR tags = ''"))
+            conn.commit()
+        print("Backfilled empty tags with 'tag'")
     except Exception as e:
         print(f"Migration note: {e}")
 

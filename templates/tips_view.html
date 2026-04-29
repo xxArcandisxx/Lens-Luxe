@@ -44,6 +44,17 @@
         {{ tip.content | safe }}
     </div>
 
+    {% if tip.tags %}
+        <div class="tip-tags" style="margin-bottom: 20px; padding-top: 16px; border-top: 1px solid #eee;">
+            <span style="font-weight: 600; color: #333; margin-right: 8px; font-size: 0.9rem;">Tags:</span>
+            {% for tag in tip.tags.split(',') %}
+                {% if tag.strip() %}
+                    <span style="font-size: 0.82rem; background: #f5f5f5; padding: 4px 12px; border-radius: 20px; color: #666; margin-right: 6px; display: inline-block; margin-bottom: 4px;">#{{ tag.strip() }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {% if user and user.id == tip.user_id %}
         <div class="tip-actions">
             <a href="{{ url_for('tips_edit', tip_id=tip.id) }}" class="action-btn btn-edit">Edit</a>

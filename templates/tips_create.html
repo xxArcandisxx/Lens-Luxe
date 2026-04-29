@@ -112,6 +112,11 @@
         </div>
 
         <div class="form-group">
+            <label for="tags">Tags * (comma separated)</label>
+            <input type="text" id="tags" name="tags" placeholder="lighting, portrait, beginner" required>
+        </div>
+
+        <div class="form-group">
             <label for="content">Tip Content *</label>
             <input type="hidden" id="content" name="content">
             <div id="editor-container"
@@ -148,6 +153,10 @@
         <h1 class="preview-title" id="previewTitle"></h1>
         <div class="preview-subtitle" id="previewSubtitle"></div>
         <div class="preview-body" id="previewBody"></div>
+        <div class="preview-tags" id="previewTagsBlock" style="display:none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 16px;">
+            <span style="font-weight:600; color:#333; margin-right:8px;">Tags:</span>
+            <span id="previewTagsList"></span>
+        </div>
     </div>
 </div>
 
@@ -337,6 +346,17 @@
                 reader.readAsDataURL(coverInput.files[0]);
             } else {
                 coverImg.style.display = 'none';
+            }
+
+            // Tags
+            const tagsVal = document.getElementById('tags').value.trim();
+            const tagsBlock = document.getElementById('previewTagsBlock');
+            const tagsList = document.getElementById('previewTagsList');
+            if (tagsVal) {
+                tagsList.innerHTML = tagsVal.split(',').filter(t => t.trim()).map(t => `<span style="font-size: 0.82rem; background: #f5f5f5; padding: 4px 12px; border-radius: 20px; color: #666; margin-right: 6px; display: inline-block;">#${t.trim()}</span>`).join('');
+                tagsBlock.style.display = 'block';
+            } else {
+                tagsBlock.style.display = 'none';
             }
 
             document.getElementById('previewModal').style.display = 'block';
