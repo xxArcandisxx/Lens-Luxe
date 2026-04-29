@@ -1456,6 +1456,38 @@ body {
     color: var(--primary);
 }
 
+/* Smaller vote buttons for tip view page */
+.tip-view-vote-sm {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+}
+
+.tip-view-vote-sm .vote-button-lg,
+.tip-view-vote-sm .share-button-lg {
+    flex-direction: row;
+    padding: 8px 16px;
+    gap: 6px;
+    font-size: 0.85rem;
+    border-width: 1px;
+    border-radius: 20px;
+}
+
+.tip-view-vote-sm .vote-icon,
+.tip-view-vote-sm .share-icon {
+    font-size: 1rem;
+}
+
+.tip-view-vote-sm .vote-count-lg {
+    font-size: 0.9rem;
+    min-width: auto;
+}
+
+.tip-view-vote-sm .vote-label {
+    font-size: 0.8rem;
+}
+
 /* Helper Classes */
 .author-avatar-fallback {
     background: var(--primary);

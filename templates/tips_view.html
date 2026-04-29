@@ -33,39 +33,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Vote Section -->
-        <div class="tip-view-vote-section">
-            {% set like_count = tip.votes | selectattr('vote_type', 'equalto', 'like') | list | length %}
-            {% set dislike_count = tip.votes | selectattr('vote_type', 'equalto', 'dislike') | list | length %}
-            {% set user_vote = None %}
-            {% if user %}
-                {% for vote in tip.votes %}
-                    {% if vote.user_id == user.id %}
-                        {% set user_vote = vote.vote_type %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-
-            <button class="vote-button-lg {% if user_vote == 'like' %}active{% endif %}"
-                    onclick="handleVoteDetail({{ tip.id }}, 'like')"
-                    {% if not user %}disabled{% endif %}>
-                <span class="vote-icon"><i class="fas fa-thumbs-up"></i></span>
-                <span class="vote-count-lg" id="like-count-detail-{{ tip.id }}">{{ like_count }}</span>
-                <span class="vote-label">Like</span>
-            </button>
-            <button class="vote-button-lg {% if user_vote == 'dislike' %}active{% endif %}"
-                    onclick="handleVoteDetail({{ tip.id }}, 'dislike')"
-                    {% if not user %}disabled{% endif %}>
-                <span class="vote-icon"><i class="fas fa-thumbs-down"></i></span>
-                <span class="vote-count-lg" id="dislike-count-detail-{{ tip.id }}">{{ dislike_count }}</span>
-                <span class="vote-label">Dislike</span>
-            </button>
-            <button class="share-button-lg" onclick="sharePost('{{ tip.title }}', '{{ request.base_url }}')">
-                <span class="share-icon"><i class="fas fa-share-alt"></i></span>
-                <span class="vote-label">Share</span>
-            </button>
-        </div>
     </div>
 
     {% if tip.image %}
@@ -83,6 +50,39 @@
             <button class="action-btn btn-delete" onclick="deleteTip({{ tip.id }})">Delete</button>
         </div>
     {% endif %}
+
+    <!-- Vote Section (bottom) -->
+    <div class="tip-view-vote-section tip-view-vote-sm">
+        {% set like_count = tip.votes | selectattr('vote_type', 'equalto', 'like') | list | length %}
+        {% set dislike_count = tip.votes | selectattr('vote_type', 'equalto', 'dislike') | list | length %}
+        {% set user_vote = None %}
+        {% if user %}
+            {% for vote in tip.votes %}
+                {% if vote.user_id == user.id %}
+                    {% set user_vote = vote.vote_type %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <button class="vote-button-lg {% if user_vote == 'like' %}active{% endif %}"
+                onclick="handleVoteDetail({{ tip.id }}, 'like')"
+                {% if not user %}disabled{% endif %}>
+            <span class="vote-icon"><i class="fas fa-thumbs-up"></i></span>
+            <span class="vote-count-lg" id="like-count-detail-{{ tip.id }}">{{ like_count }}</span>
+            <span class="vote-label">Like</span>
+        </button>
+        <button class="vote-button-lg {% if user_vote == 'dislike' %}active{% endif %}"
+                onclick="handleVoteDetail({{ tip.id }}, 'dislike')"
+                {% if not user %}disabled{% endif %}>
+            <span class="vote-icon"><i class="fas fa-thumbs-down"></i></span>
+            <span class="vote-count-lg" id="dislike-count-detail-{{ tip.id }}">{{ dislike_count }}</span>
+            <span class="vote-label">Dislike</span>
+        </button>
+        <button class="share-button-lg" onclick="sharePost('{{ tip.title }}', '{{ request.base_url }}')">
+            <span class="share-icon"><i class="fas fa-share-alt"></i></span>
+            <span class="vote-label">Share</span>
+        </button>
+    </div>
 </div>
 
 <script>
