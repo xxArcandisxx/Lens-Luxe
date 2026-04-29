@@ -20,6 +20,60 @@
             height: 420px;
             width: 360px;
         }
+
+        /* Preview Modal */
+        #previewModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0,0,0,0.55);
+            overflow-y: auto;
+        }
+        #previewModal .modal-inner {
+            background: #fff;
+            max-width: 900px;
+            margin: 60px auto;
+            border-radius: 12px;
+            padding: 50px 60px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        #previewModal .close-btn {
+            position: absolute;
+            top: 20px; right: 24px;
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        #previewModal .close-btn:hover { background: #f5f5f5; }
+        #previewModal .preview-cover {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 32px;
+        }
+        #previewModal .preview-category {
+            display: inline-block;
+            background: #5a1020;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+        #previewModal .preview-date { color: #999; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; }
+        #previewModal .preview-title { font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: #5a1020; margin: 10px 0 8px; }
+        #previewModal .preview-subtitle { font-size: 1.15rem; color: #888; margin-bottom: 24px; font-style: italic; }
+        #previewModal .preview-body { font-size: 1.15rem; line-height: 1.85; color: #444; }
+        #previewModal .preview-body img { max-width: 100%; border-radius: 8px; margin: 16px auto; display: block; }
     </style>
 {% endblock %}
 
@@ -76,11 +130,25 @@
             </div>
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Publish Tip</button>
+        <div class="form-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="previewBtn" style="background: transparent; border: 2px solid #5a1020; color: #5a1020; padding: 10px 24px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; border-radius: 4px; transition: all 0.2s;">👁 Preview</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Publish Tip</button>
             <a href="{{ url_for('tips') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal">
+    <div class="modal-inner">
+        <button class="close-btn" id="closePreview">✕ Close Preview</button>
+        <img id="previewCoverImg" class="preview-cover" src="" alt="Cover" style="display:none;">
+        <span class="preview-category" id="previewCategory"></span>
+        <p class="preview-date" id="previewDate"></p>
+        <h1 class="preview-title" id="previewTitle"></h1>
+        <div class="preview-subtitle" id="previewSubtitle"></div>
+        <div class="preview-body" id="previewBody"></div>
+    </div>
 </div>
 
 <!-- Emoji Picker Container -->
@@ -231,6 +299,59 @@
                 document.getElementById('errorMessage').style.display = 'block';
                 btn.disabled = false;
                 btn.textContent = 'Publish Tip';
+            }
+        });
+
+        // ---- Preview ----
+        document.getElementById('previewBtn').addEventListener('click', () => {
+            // Category
+            const catSelect = document.getElementById('category');
+            const catText = catSelect.options[catSelect.selectedIndex]?.text || '';
+            const previewCat = document.getElementById('previewCategory');
+            if (catText && catSelect.value) {
+                previewCat.textContent = catText;
+                previewCat.style.display = 'inline-block';
+            } else {
+                previewCat.style.display = 'none';
+            }
+
+            // Title
+            document.getElementById('previewTitle').textContent = document.getElementById('title').value || 'Untitled';
+
+            // Subtitle
+            document.getElementById('previewSubtitle').textContent = document.getElementById('subtitle').value || '';
+
+            // Date (today)
+            const now = new Date();
+            document.getElementById('previewDate').textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Body
+            document.getElementById('previewBody').innerHTML = quill.root.innerHTML;
+
+            // Cover image preview from file input
+            const coverInput = document.getElementById('imageInput');
+            const coverImg = document.getElementById('previewCoverImg');
+            if (coverInput.files && coverInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => { coverImg.src = e.target.result; coverImg.style.display = 'block'; };
+                reader.readAsDataURL(coverInput.files[0]);
+            } else {
+                coverImg.style.display = 'none';
+            }
+
+            document.getElementById('previewModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        });
+
+        document.getElementById('closePreview').addEventListener('click', () => {
+            document.getElementById('previewModal').style.display = 'none';
+            document.body.style.overflow = '';
+        });
+
+        document.getElementById('previewModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('previewModal')) {
+                document.getElementById('previewModal').style.display = 'none';
+                document.body.style.overflow = '';
             }
         });
     </script>
