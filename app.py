@@ -711,6 +711,7 @@ def tips():
     for tip in tips_list:
         tip.like_count = len([v for v in tip.votes if v.vote_type == 'like'])
         tip.dislike_count = len([v for v in tip.votes if v.vote_type == 'dislike'])
+        tip.comment_count = len(tip.comments)
         tip.user_vote = None
         if user:
             user_vote = next((v for v in tip.votes if v.user_id == user.id), None)

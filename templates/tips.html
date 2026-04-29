@@ -58,6 +58,10 @@
                                 <span class="vote-icon"><i class="fas fa-thumbs-down"></i></span>
                                 <span class="vote-count" id="dislike-count-{{ tip.id }}">{{ tip.dislike_count }}</span>
                             </button>
+                            <span class="vote-button" style="cursor: default;">
+                                <span class="vote-icon"><i class="fas fa-comment"></i></span>
+                                <span class="vote-count">{{ tip.comment_count }}</span>
+                            </span>
                             <button class="share-button" onclick="sharePost('{{ tip.title }}', '{{ request.base_url.rstrip('/') }}/tips/{{ tip.id }}')">
                                 <span class="share-icon"><i class="fas fa-share-alt"></i></span>
                                 <span>Share</span>
