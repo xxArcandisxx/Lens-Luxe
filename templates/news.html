@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Fashion News | Lens&Luxe{% endblock %}
+{% block description %}Stay current with the latest in fashion — runway highlights, retail news, accessories, and industry stories curated by Lens&Luxe.{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='news.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- News Hero -->
+<section class="news-hero">
+    <div class="news-hero-bg"></div>
+    <div class="news-hero-orb news-hero-orb--1"></div>
+    <div class="news-hero-orb news-hero-orb--2"></div>
+    <div class="news-hero-orb news-hero-orb--3"></div>
+    <div class="container news-hero-inner">
+        <h1>Fashion<br><em>News</em></h1>
+        <p class="news-hero-subtitle">Runway highlights, retail trends, and industry stories — curated daily for the fashion-forward.</p>
+    </div>
+</section>
+
+<!-- Scrolling Ticker -->
+{% if ticker_articles %}
+<section class="news-ticker">
+    <div class="news-ticker-track">
+        <div class="news-ticker-scroll">
+            {% for article in ticker_articles %}
+            <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-ticker-item">
+                <span class="news-ticker-diamond">◆</span>
+                {{ article.title }}
+            </a>
+            {% endfor %}
+            <!-- duplicate for seamless loop -->
+            {% for article in ticker_articles %}
+            <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-ticker-item">
+                <span class="news-ticker-diamond">◆</span>
+                {{ article.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Alert -->
+{% if news_error and not lead_article %}
+<section class="news-alert-section">
+    <div class="container">
+        <div class="news-alert-card">
+            <div class="news-alert-icon"><i class="fas fa-satellite-dish"></i></div>
+            <div>
+                <h4>Feed Not Connected</h4>
+                <p>Add <code>FASHION_NEWS_API_KEY</code> to your environment to start populating this page with live fashion news.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content -->
+<section id="fashion-frontpage" class="news-content">
+    <div class="container">
+
+        <!-- Lead Story -->
+        {% if lead_article %}
+        <article class="news-lead">
+            <div class="news-lead-accent"></div>
+            <div class="news-lead-body">
+                <div class="news-lead-top">
+                    <span class="news-tag">{{ lead_article.category }}</span>
+                    <span class="news-tag news-tag--source">{{ lead_article.source }}</span>
+                </div>
+                <h2>{{ lead_article.title }}</h2>
+                <p>{{ lead_article.description }}</p>
+                <div class="news-lead-bottom">
+                    <span class="news-time"><i class="far fa-clock"></i> {{ lead_article.published_label }}</span>
+                    <a href="{{ lead_article.url }}" target="_blank" rel="noopener noreferrer" class="news-read-btn">
+                        Read Full Report <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endif %}
+
+        <!-- Spotlight -->
+        {% if spotlight_articles %}
+        <div class="news-spotlight">
+            {% for article in spotlight_articles %}
+            <article class="news-spot-card" style="--card-delay: {{ loop.index0 * 0.1 }}s">
+                <div class="news-spot-num">{{ '%02d' | format(loop.index) }}</div>
+                <div class="news-spot-body">
+                    <span class="news-tag news-tag--sm">{{ article.category }}</span>
+                    <h3>{{ article.title }}</h3>
+                    <p>{{ article.description }}</p>
+                    <div class="news-spot-footer">
+                        <span class="news-time"><i class="far fa-clock"></i> {{ article.published_label }}</span>
+                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-arrow-link">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Two Column: Wire + Sidebar -->
+        <div class="news-two-col">
+
+            <!-- Wire -->
+            <div class="news-wire">
+                <div class="news-section-title">
+                    <span class="news-section-line"></span>
+                    <h2>Fashion Wire</h2>
+                    <p>Latest dispatches from the fashion world</p>
+                </div>
+
+                {% if latest_articles %}
+                <div class="news-wire-list">
+                    {% for article in latest_articles %}
+                    <article class="news-wire-item">
+                        <div class="news-wire-marker">
+                            <span class="news-wire-dot"></span>
+                            {% if not loop.last %}<span class="news-wire-line"></span>{% endif %}
+                        </div>
+                        <div class="news-wire-content">
+                            <div class="news-wire-top">
+                                <span class="news-tag news-tag--sm">{{ article.category }}</span>
+                                <span class="news-time">{{ article.published_label }}</span>
+                            </div>
+                            <h3>{{ article.title }}</h3>
+                            <p>{{ article.description }}</p>
+                            <div class="news-wire-bottom">
+                                <span class="news-source">{{ article.source }}</span>
+                                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-link">Read →</a>
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="news-empty">
+                    <div class="news-empty-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h3>No Stories Yet</h3>
+                    <p>Once the API key is configured, this page will populate with live fashion reporting automatically.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="news-side">
+
+
+                <!-- Radar -->
+                <div class="news-side-card">
+                    <div class="news-side-card-header">
+                        <i class="fas fa-radar"></i>
+                        <h3>Desk Radar</h3>
+                    </div>
+                    {% for item in radar_items %}
+                    <div class="news-radar-item">
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ item.description }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+
+
+                <!-- Style Watch -->
+                <div class="news-side-card">
+                    <div class="news-side-card-header">
+                        <i class="fas fa-gem"></i>
+                        <h3>Style Watch</h3>
+                    </div>
+                    {% if style_articles %}
+                        {% for article in style_articles %}
+                        <div class="news-side-story">
+                            <span class="news-tag news-tag--sm">{{ article.category }}</span>
+                            <h4><a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">{{ article.title }}</a></h4>
+                            <span class="news-time">{{ article.source }} · {{ article.published_label }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="news-side-empty">Runway and accessory stories will appear here.</p>
+                    {% endif %}
+                </div>
+
+            </aside>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

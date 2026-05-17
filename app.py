@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import secrets
 from pathlib import Path
 import urllib.request
+import urllib.parse
+import urllib.error
 import json
 from dotenv import load_dotenv
 
@@ -158,6 +160,13 @@ class Tip(db.Model):
     votes = db.relationship('TipVote', backref='tip', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('TipComment', backref='tip', lazy=True, cascade="all, delete-orphan", order_by='TipComment.created_at')
 
+class NewsCache(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cache_key = db.Column(db.String(80), unique=True, nullable=False)
+    payload = db.Column(db.Text, nullable=False, default='[]')
+    fetched_at = db.Column(db.DateTime, nullable=True)
+    source = db.Column(db.String(80), default='gnews')
+
 # ===========================
 # LOGIN REQUIRED DECORATOR
 # ===========================
@@ -179,6 +188,18 @@ def login_required(f):
 # ===========================
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_env_int(name, default_value, minimum=None, maximum=None):
+    try:
+        value = int(os.environ.get(name, default_value))
+    except (TypeError, ValueError):
+        value = default_value
+
+    if minimum is not None:
+        value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
 
 def upload_to_vercel_blob(filename, file_content):
     token = os.environ.get('BLOB_READ_WRITE_TOKEN')
@@ -236,6 +257,206 @@ def save_post_picture(file):
         return filename
     return None
 
+def infer_news_category(title, description=''):
+    content = f"{title} {description}".lower()
+    category_keywords = {
+        'Runway': ['runway', 'fashion week', 'collection', 'couture', 'designer', 'show'],
+        'Retail': ['retail', 'store', 'market', 'sales', 'shopping', 'merchandise', 'boutique'],
+        'Accessories': ['bag', 'bags', 'shoe', 'shoes', 'jewelry', 'accessory', 'watch'],
+        'Street Style': ['street style', 'wardrobe', 'outfit', 'dressing', 'look'],
+        'Sustainability': ['sustainab', 'resale', 'rewear', 'vintage', 'circular', 'repair'],
+        'Fashion Business': ['luxury brand', 'fashion house', 'label', 'apparel', 'textile', 'department store']
+    }
+
+    for category, keywords in category_keywords.items():
+        if any(keyword in content for keyword in keywords):
+            return category
+    return 'Fashion'
+
+def is_strict_fashion_article(title, description=''):
+    content = f"{title} {description}".lower()
+    fashion_keywords = [
+        'fashion', 'runway', 'couture', 'designer', 'collection', 'catwalk',
+        'apparel', 'garment', 'wardrobe', 'street style', 'ready-to-wear',
+        'luxury brand', 'fashion house', 'boutique', 'retail', 'accessory',
+        'bag', 'bags', 'shoe', 'shoes', 'jewelry', 'textile', 'label',
+        'menswear', 'womenswear', 'model', 'fashion week', 'styling'
+    ]
+    soft_exclusions = [
+        'skincare', 'skin care', 'makeup tutorial', 'beauty routine',
+        'hair tutorial', 'fragrance review', 'celebrity breakup', 'movie premiere'
+    ]
+
+    has_fashion_signal = any(keyword in content for keyword in fashion_keywords)
+    looks_non_fashion = any(keyword in content for keyword in soft_exclusions)
+
+    return has_fashion_signal and not looks_non_fashion
+
+def normalize_fashion_article(article):
+    title = (article.get('title') or '').strip()
+    description = (article.get('description') or '').strip()
+    article_url = article.get('url') or '#'
+    image_url = article.get('image') or ''
+    source_name = (article.get('source') or {}).get('name') or 'Fashion Wire'
+    published_at_raw = article.get('publishedAt') or ''
+
+    published_at = None
+    if published_at_raw:
+        try:
+            published_at = datetime.fromisoformat(published_at_raw.replace('Z', '+00:00'))
+        except ValueError:
+            published_at = None
+
+    if not title or article_url == '#':
+        return None
+
+    return {
+        'title': title,
+        'description': description or 'Tap through for the latest fashion coverage.',
+        'url': article_url,
+        'image': image_url,
+        'source': source_name,
+        'published_at': published_at_raw,
+        'published_label': published_at.strftime('%B %d, %Y') if published_at else 'Latest update',
+        'category': infer_news_category(title, description)
+    }
+
+def fetch_fashion_news_from_api():
+    api_key = os.environ.get('FASHION_NEWS_API_KEY', '').strip()
+    if not api_key:
+        return [], 'missing_api_key'
+
+    params = {
+        'q': os.environ.get('FASHION_NEWS_QUERY', 'fashion OR runway OR couture OR designer OR luxury style'),
+        'lang': os.environ.get('FASHION_NEWS_LANG', 'en'),
+        'country': os.environ.get('FASHION_NEWS_COUNTRY', 'us'),
+        'max': get_env_int('FASHION_NEWS_MAX_RESULTS', 10, minimum=6, maximum=25),
+        'sortby': 'publishedAt',
+        'apikey': api_key
+    }
+    api_url = os.environ.get('FASHION_NEWS_API_URL', 'https://gnews.io/api/v4/search')
+    request_url = f"{api_url}?{urllib.parse.urlencode(params)}"
+    request = urllib.request.Request(
+        request_url,
+        headers={
+            'User-Agent': 'LensAndLuxe/1.0',
+            'Accept': 'application/json'
+        }
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as error:
+        print(f"Fashion news API HTTP error: {error.code}")
+        return [], 'http_error'
+    except urllib.error.URLError as error:
+        print(f"Fashion news API URL error: {error}")
+        return [], 'network_error'
+    except Exception as error:
+        print(f"Fashion news API unexpected error: {error}")
+        return [], 'unknown_error'
+
+    raw_articles = payload.get('articles', [])
+    normalized_articles = []
+    for raw_article in raw_articles:
+        article = normalize_fashion_article(raw_article)
+        if article and is_strict_fashion_article(article['title'], article['description']):
+            normalized_articles.append(article)
+
+    return normalized_articles, None
+
+def build_news_radar(articles):
+    radar_copy = {
+        'Runway': 'Collections and fashion-week coverage are leading the energy of the feed right now.',
+        'Retail': 'Business and shopping stories are surfacing more often, pointing to a strong retail angle.',
+        'Accessories': 'Bags, shoes, and jewelry are drawing outsized attention across the latest headlines.',
+        'Street Style': 'Wearable styling stories are dominating, with more focus on everyday fashion direction.',
+        'Sustainability': 'Circular fashion and long-wear storytelling are showing up as a recurring theme.',
+        'Fashion Business': 'Brand, apparel, and industry movement are playing a bigger role in the day’s coverage.',
+        'Fashion': 'General fashion desk coverage is carrying the widest share of updates at the moment.'
+    }
+    category_counts = {}
+    for article in articles:
+        category = article.get('category', 'Fashion')
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    ordered_categories = sorted(
+        category_counts.items(),
+        key=lambda item: (-item[1], item[0])
+    )
+
+    radar_items = []
+    for category, count in ordered_categories[:3]:
+        radar_items.append({
+            'title': category,
+            'description': f"{count} {'story' if count == 1 else 'stories'} in the current feed. {radar_copy.get(category, radar_copy['Fashion'])}"
+        })
+
+    if not radar_items:
+        radar_items = [
+            {
+                'title': 'Fashion Desk',
+                'description': 'Connect an API key to start tracking live fashion headlines here.'
+            }
+        ]
+
+    return radar_items
+
+def get_fashion_news(force_refresh=False):
+    cache_key = 'fashion-news'
+    refresh_minutes = get_env_int('FASHION_NEWS_REFRESH_MINUTES', 30, minimum=5)
+    now = datetime.utcnow()
+
+    cache_entry = NewsCache.query.filter_by(cache_key=cache_key).first()
+    if cache_entry and cache_entry.payload and cache_entry.fetched_at and not force_refresh:
+        if now - cache_entry.fetched_at < timedelta(minutes=refresh_minutes):
+            return {
+                'articles': json.loads(cache_entry.payload),
+                'last_updated': cache_entry.fetched_at,
+                'api_configured': bool(os.environ.get('FASHION_NEWS_API_KEY', '').strip()),
+                'using_cached_data': True,
+                'is_stale': False,
+                'error': None
+            }
+
+    fresh_articles, error = fetch_fashion_news_from_api()
+    if fresh_articles:
+        serialized_payload = json.dumps(fresh_articles)
+        if not cache_entry:
+            cache_entry = NewsCache(cache_key=cache_key, source='gnews')
+        cache_entry.payload = serialized_payload
+        cache_entry.fetched_at = now
+        db.session.add(cache_entry)
+        db.session.commit()
+        return {
+            'articles': fresh_articles,
+            'last_updated': now,
+            'api_configured': True,
+            'using_cached_data': False,
+            'is_stale': False,
+            'error': None
+        }
+
+    if cache_entry and cache_entry.payload:
+        return {
+            'articles': json.loads(cache_entry.payload),
+            'last_updated': cache_entry.fetched_at,
+            'api_configured': bool(os.environ.get('FASHION_NEWS_API_KEY', '').strip()),
+            'using_cached_data': True,
+            'is_stale': True,
+            'error': error
+        }
+
+    return {
+        'articles': [],
+        'last_updated': None,
+        'api_configured': bool(os.environ.get('FASHION_NEWS_API_KEY', '').strip()),
+        'using_cached_data': False,
+        'is_stale': False,
+        'error': error
+    }
+
 def send_reset_email(user, reset_token):
     """Send password reset email"""
     reset_url = url_for('reset_password', token=reset_token, _external=True)
@@ -271,6 +492,39 @@ def home():
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
     return render_template('index.html', user=user)
+
+@app.route('/news')
+def news():
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    news_data = get_fashion_news(force_refresh=request.args.get('refresh') == '1')
+    refresh_minutes = get_env_int('FASHION_NEWS_REFRESH_MINUTES', 30, minimum=5)
+    articles = news_data['articles']
+    ticker_articles = articles[:5]
+    lead_article = articles[0] if articles else None
+    spotlight_articles = articles[1:3]
+    latest_articles = articles[3:9] if len(articles) > 3 else articles[1:7]
+    business_articles = [article for article in articles[1:] if article['category'] in ('Retail', 'Sustainability', 'Fashion Business')][:3]
+    style_articles = [article for article in articles[1:] if article['category'] in ('Runway', 'Accessories', 'Street Style', 'Fashion')][:4]
+    radar_items = build_news_radar(articles)
+
+    return render_template(
+        'news.html',
+        user=user,
+        ticker_articles=ticker_articles,
+        lead_article=lead_article,
+        spotlight_articles=spotlight_articles,
+        latest_articles=latest_articles,
+        business_articles=business_articles,
+        style_articles=style_articles,
+        radar_items=radar_items,
+        article_count=len(articles),
+        refresh_minutes=refresh_minutes,
+        last_updated=news_data['last_updated'],
+        api_configured=news_data['api_configured'],
+        using_cached_data=news_data['using_cached_data'],
+        is_stale=news_data['is_stale'],
+        news_error=news_data['error']
+    )
 
 @app.route('/account', methods=['GET', 'POST'])
 def account():

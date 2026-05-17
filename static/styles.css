@@ -1,4 +1,4 @@
-/* ===========================
+﻿/* ===========================
    FONT IMPORTS
    =========================== */
 
@@ -539,6 +539,9 @@ body {
 .social-link:hover {
     background-color: var(--secondary);
 }
+
+
+/* NEWS PAGE styles are in news.css */
 
 .footer-bottom {
     border-top: 1px solid #444;
