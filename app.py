@@ -116,6 +116,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.Text, nullable=True)
     tags = db.Column(db.String(500), default='')
+    section = db.Column(db.String(50), nullable=False, default='blog', server_default='blog')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
@@ -808,9 +809,42 @@ def upload_image():
                 return jsonify({'url': url_for('static', filename='uploads/posts/' + filename)}), 200
     return jsonify({'error': 'Failed to upload image'}), 500
 
+@app.route('/daily-scoops')
+def daily_scoops():
+    posts = Post.query.filter_by(section='daily_scoops').order_by(Post.created_at.desc()).all()
+    user = User.query.get(session['user_id']) if 'user_id' in session else None
+    return render_template('daily_scoops.html', posts=posts, user=user)
+
+@app.route('/daily-scoops/create', methods=['GET', 'POST'])
+@login_required
+def daily_scoops_create():
+    user = User.query.get(session['user_id'])
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        tags = request.form.get('tags', '')
+        if not title or not content:
+            return jsonify({'error': 'Title and content are required'}), 400
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                image_filename = save_post_picture(file)
+                if not image_filename:
+                    return jsonify({'error': 'Invalid image file type'}), 400
+        post = Post(title=title, content=content, image=image_filename, tags=tags, section='daily_scoops', user_id=user.id)
+        try:
+            db.session.add(post)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Daily scoop created successfully!', 'redirect': url_for('daily_scoops')}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to create daily scoop'}), 500
+    return render_template('daily_scoops_create.html', user=user)
+
 @app.route('/blog')
 def blog():
-    posts = Post.query.order_by(Post.created_at.desc()).all()
+    posts = Post.query.filter_by(section='blog').order_by(Post.created_at.desc()).all()
     user = User.query.get(session['user_id']) if 'user_id' in session else None
     return render_template('blog.html', posts=posts, user=user)
 
@@ -1241,6 +1275,19 @@ with app.app_context():
             conn.execute(text("UPDATE tip SET tags = 'tag' WHERE tags IS NULL OR tags = ''"))
             conn.commit()
         print("Backfilled empty tags with 'tag'")
+
+        post_columns = [col['name'] for col in inspector.get_columns('post')]
+        if 'section' not in post_columns:
+            print("Adding section column to post table...")
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE post ADD COLUMN section VARCHAR(50) DEFAULT 'blog'"))
+                conn.commit()
+            print("Successfully added section column")
+
+            with db.engine.connect() as conn:
+                conn.execute(text("UPDATE post SET section = 'blog' WHERE section IS NULL OR section = ''"))
+                conn.commit()
+            print("Backfilled post section values with 'blog'")
     except Exception as e:
         print(f"Migration note: {e}")
 

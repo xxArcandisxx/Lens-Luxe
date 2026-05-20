@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Scoops - Lens&Luxe{% endblock %}
+
+{% block content %}
+<section class="scoop-section" style="padding: 60px 5%; background: #fffef9;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 45px;">
+        <div>
+            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; color: #5a1020; margin: 0;">Daily Scoops</h1>
+            <p style="margin-top: 14px; font-size: 1rem; color: #6d5b50; max-width: 700px;">A Pinterest-style board of fresh articles, inspiration, and daily stories from Lens&Luxe. Browse the latest posts in a dynamic feed.</p>
+        </div>
+        {% if user %}
+        <a href="{{ url_for('daily_scoops_create') }}" class="btn-primary" style="padding: 12px 26px; font-size: 1rem; background-color: #5a1020; color: #fff; text-decoration: none; border-radius: 5px;">Create a Scoop</a>
+        {% endif %}
+    </div>
+
+    <div class="scoop-grid" style="column-count: 4; column-gap: 24px;">
+        {% if posts %}
+            {% for post in posts %}
+            <article class="scoop-card" style="display: inline-block; width: 100%; margin-bottom: 24px; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 14px 30px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <a href="{{ url_for('blog_post', post_id=post.id) }}" style="text-decoration: none; color: inherit; display: block;">
+                    {% if post.image %}
+                        {% set cover = post.image.split(',')[0]|trim %}
+                        <div style="overflow: hidden;">
+                            <img src="{{ cover if 'http' in cover else url_for('static', filename='uploads/posts/' + cover) }}" alt="{{ post.title }}" style="width: 100%; display: block; object-fit: cover; transition: transform 0.4s ease;">
+                        </div>
+                    {% else %}
+                        <div style="width: 100%; min-height: 210px; background: #f7f2eb; display: flex; align-items: center; justify-content: center; color: #b29c86; font-size: 1rem;">No image available</div>
+                    {% endif %}
+                    <div style="padding: 20px;">
+                        <p style="font-size: 0.85rem; color: #9f8a7d; margin-bottom: 8px;">{{ post.created_at.strftime('%B %d, %Y') }} • {{ post.author.first_name }}</p>
+                        <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: #3f2f2a; margin: 0;">{{ post.title }}</h2>
+                    </div>
+                </a>
+            </article>
+            {% endfor %}
+        {% else %}
+            <p style="font-size: 1rem; color: #6d5b50;">No scoops yet. Add a new article and watch the board fill up.</p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    .scoop-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(0,0,0,0.12);
+    }
+    .scoop-grid {
+        column-fill: balance;
+    }
+    .scoop-card img {
+        width: 100%;
+        display: block;
+    }
+    @media (max-width: 1200px) {
+        .scoop-grid {
+            column-count: 3 !important;
+        }
+    }
+    @media (max-width: 900px) {
+        .scoop-grid {
+            column-count: 2 !important;
+        }
+    }
+    @media (max-width: 650px) {
+        .scoop-grid {
+            column-count: 1 !important;
+        }
+    }
+</style>
+{% endblock %}
