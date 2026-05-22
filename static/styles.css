@@ -1,4 +1,4 @@
-﻿/* ===========================
+/* ===========================
    FONT IMPORTS
    =========================== */
 
@@ -1614,4 +1614,411 @@ body {
 .nav-avatar-initials:hover {
     transform: scale(1.08);
     box-shadow: 0 2px 10px rgba(90, 16, 32, 0.3);
+}
+
+/* ===========================
+   EDITORIAL HOMEPAGE
+   =========================== */
+
+/* ── Hero Editorial ────────────────── */
+.hero-editorial {
+    position: relative;
+    height: 90vh;
+    min-height: 550px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    background:
+        url('https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600&q=80')
+        center / cover no-repeat;
+}
+
+.hero-editorial-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 5, 8, 0.62);
+    z-index: 1;
+}
+
+.hero-editorial-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 0 30px;
+    animation: heroFadeUp 1s ease-out both;
+}
+
+@keyframes heroFadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-editorial-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255, 254, 249, 0.65);
+    border: 1px solid rgba(255, 254, 249, 0.25);
+    padding: 6px 18px;
+    border-radius: 30px;
+    margin-bottom: 30px;
+}
+
+.hero-editorial-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--accent);
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+}
+
+.hero-editorial-headline a {
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.3s;
+}
+
+.hero-editorial-headline a:hover {
+    opacity: 0.8;
+}
+
+.hero-editorial-sub {
+    font-size: 1.15rem;
+    color: rgba(255, 254, 249, 0.75);
+    margin-bottom: 35px;
+    line-height: 1.7;
+    font-weight: 300;
+}
+
+.hero-editorial-cta {
+    display: inline-block;
+    padding: 14px 38px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: all 0.35s ease;
+    font-weight: 500;
+}
+
+.hero-editorial-cta:hover {
+    background: var(--accent);
+    color: var(--primary);
+}
+
+/* Scroll hint */
+.hero-editorial-scroll-hint {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.hero-editorial-scroll-hint span {
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255, 254, 249, 0.45);
+}
+
+.hero-editorial-scroll-line {
+    width: 1px;
+    height: 40px;
+    background: rgba(255, 254, 249, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-editorial-scroll-line::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+    0%   { top: -100%; }
+    50%  { top: 100%;  }
+    100% { top: 100%;  }
+}
+
+/* ── Editorial Sections ────────────── */
+.editorial-section {
+    padding: 90px 5%;
+    background: var(--accent);
+}
+
+.editorial-section--dark {
+    background: #1a0a0e;
+}
+
+.editorial-section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.editorial-section-header--light h2,
+.editorial-section-header--light p {
+    color: var(--accent);
+}
+
+.editorial-section-header--light .editorial-label {
+    color: rgba(255, 254, 249, 0.5);
+    border-color: rgba(255, 254, 249, 0.2);
+}
+
+.editorial-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 4px 16px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+
+.editorial-section-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.editorial-section-header p {
+    font-size: 1rem;
+    color: #888;
+    font-weight: 300;
+}
+
+/* ── Magazine Grid ─────────────────── */
+.magazine-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.magazine-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.magazine-card {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--accent);
+}
+
+.magazine-card--large {
+    height: 100%;
+    min-height: 480px;
+}
+
+.magazine-card--side {
+    flex: 1;
+    min-height: 224px;
+}
+
+.magazine-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+}
+
+.magazine-card:hover .magazine-card-img {
+    transform: scale(1.05);
+}
+
+.magazine-card-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+}
+
+.magazine-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px;
+    background: linear-gradient(to top, rgba(10, 2, 4, 0.85) 0%, transparent 100%);
+    z-index: 2;
+}
+
+.magazine-card-date {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.magazine-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.magazine-card--side .magazine-card-title {
+    font-size: 1.25rem;
+}
+
+.magazine-card--side .magazine-card-overlay {
+    padding: 20px;
+}
+
+.magazine-card-author {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    letter-spacing: 1px;
+}
+
+/* ── Masonry Gallery ───────────────── */
+.masonry-gallery {
+    column-count: 3;
+    column-gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.masonry-item {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    text-decoration: none;
+    color: var(--accent);
+}
+
+.masonry-item img {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    transition: transform 0.5s ease, filter 0.5s ease;
+}
+
+.masonry-item:hover img {
+    transform: scale(1.04);
+    filter: brightness(0.75);
+}
+
+.masonry-item-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(10, 2, 4, 0.8) 0%, transparent 100%);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.masonry-item:hover .masonry-item-caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.masonry-item-caption h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.masonry-item-caption span {
+    font-size: 0.72rem;
+    opacity: 0.65;
+    letter-spacing: 1px;
+}
+
+/* ── Editorial Homepage Responsive ─── */
+@media (max-width: 900px) {
+    .hero-editorial-headline {
+        font-size: 2.8rem;
+    }
+
+    .magazine-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .magazine-card--large {
+        min-height: 360px;
+    }
+
+    .magazine-card--side {
+        min-height: 220px;
+    }
+
+    .masonry-gallery {
+        column-count: 2;
+    }
+
+    .editorial-section-header h2 {
+        font-size: 2.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-editorial {
+        height: 80vh;
+        min-height: 450px;
+    }
+
+    .hero-editorial-headline {
+        font-size: 2rem;
+    }
+
+    .hero-editorial-sub {
+        font-size: 0.95rem;
+    }
+
+    .masonry-gallery {
+        column-count: 1;
+    }
+
+    .magazine-card--large {
+        min-height: 280px;
+    }
+
+    .magazine-card-title {
+        font-size: 1.4rem;
+    }
+
+    .editorial-section {
+        padding: 60px 4%;
+    }
 }

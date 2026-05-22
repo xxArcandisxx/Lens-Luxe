@@ -492,7 +492,23 @@ def home():
     user = None
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
-    return render_template('index.html', user=user)
+
+    # Latest 3 blog posts for "The Daily Edit"
+    top_posts = Post.query.filter_by(section='blog').order_by(Post.created_at.desc()).limit(3).all()
+
+    # News ticker (first 5 articles from the fashion news API)
+    news_data = get_fashion_news()
+    ticker_articles = news_data['articles'][:5] if news_data['articles'] else []
+
+    # 6 photography tips with images for "Behind the Lens"
+    photography_tips = Tip.query.filter(
+        Tip.category == 'photography',
+        Tip.image.isnot(None),
+        Tip.image != ''
+    ).order_by(Tip.created_at.desc()).limit(6).all()
+
+    return render_template('index.html', user=user, top_posts=top_posts,
+                           ticker_articles=ticker_articles, photography_tips=photography_tips)
 
 @app.route('/news')
 def news():
