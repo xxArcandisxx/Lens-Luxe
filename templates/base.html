@@ -119,6 +119,7 @@
                 <li><a href="{{ url_for('blog') }}" class="nav-link">Blog</a></li>
                 <li><a href="{{ url_for('tips') }}" class="nav-link">Tips</a></li>
                 <li><a href="{{ url_for('daily_scoops') }}" class="nav-link">Daily Scoops</a></li>
+                <li><a href="{{ url_for('shop_near_me') }}" class="nav-link">Shops</a></li>
                 {% if user %}
                 <li>
                     <a href="{{ url_for('dashboard') }}" title="Go to Dashboard">
@@ -137,6 +138,7 @@
             </ul>
         </div>
     </nav>
+
     <div class="flash-messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -166,6 +168,7 @@
                         <li><a href="{{ url_for('news') }}">News</a></li>
                         <li><a href="{{ url_for('blog') }}">Blog</a></li>
                         <li><a href="{{ url_for('daily_scoops') }}">Daily Scoops</a></li>
+                        <li><a href="{{ url_for('shop_near_me') }}">Shops</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
