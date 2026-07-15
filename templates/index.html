@@ -1,93 +1,152 @@
 {% extends "base.html" %}
 
-{% block title %}Lens&Luxe - Fashion & Lifestyle Blog{% endblock %}
-{% block description %}Lens&Luxe - Fashion Blog showcasing style, trends, and luxury living{% endblock %}
+{% block title %}Lens&Luxe - Fashion & Lifestyle Magazine{% endblock %}
+{% block description %}Lens&Luxe - A luxury digital magazine celebrating style, photography, and modern elegance{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='news.css') }}">
+{% endblock %}
 
 {% block content %}
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-content">
-            {% if user %}
-                <h1>Welcome back, {{ user.first_name }}!</h1>
-                <p>Discover New Stories in Luxury Fashion</p>
-                <a href="{{ url_for('blog') }}" class="cta-button">Explore Our Stories</a>
+    <!-- ═══════════════════════════════════════════
+         HERO EDITORIAL
+         ═══════════════════════════════════════════ -->
+    <section class="hero-editorial">
+        <div class="hero-editorial-overlay"></div>
+        <div class="hero-editorial-content">
+            <span class="hero-editorial-badge">Current Issue</span>
+            {% if top_posts %}
+                <h1 class="hero-editorial-headline">
+                    <a href="{{ url_for('blog_post', post_id=top_posts[0].id) }}">{{ top_posts[0].title }}</a>
+                </h1>
+                <p class="hero-editorial-sub">{{ top_posts[0].content|striptags|truncate(120) }}</p>
+                <a href="{{ url_for('blog') }}" class="hero-editorial-cta">Explore the Journal</a>
             {% else %}
-                <h1>Welcome to Lens&Luxe</h1>
-                <p>Capturing Style, Celebrating Elegance</p>
-                <a href="{{ url_for('blog') }}" class="cta-button">Explore Our Stories</a>
+                <h1 class="hero-editorial-headline">Capturing Style,<br>Celebrating Elegance</h1>
+                <p class="hero-editorial-sub">Your destination for luxury fashion photography and editorial stories</p>
+                <a href="{{ url_for('blog') }}" class="hero-editorial-cta">Explore the Journal</a>
             {% endif %}
         </div>
-    </section>
-
-    <!-- Featured Posts Section -->
-    <section id="blog" class="featured-posts">
-        <div class="container">
-            <h2>Featured Stories</h2>
-            
-            <div class="posts-grid">
-                <!-- Post 1 -->
-                <article class="post-card">
-                    <div class="post-image" style="background: linear-gradient(135deg, #800020 0%, #a0003a 100%);"></div>
-                    <div class="post-content">
-                        <span class="post-date">March 15, 2026</span>
-                        <h3>Spring Elegance: The New Burgundy Trend</h3>
-                        <p>Discover how burgundy is dominating this spring's fashion landscape. From haute couture runways to street style, explore the versatility of this luxurious hue.</p>
-                        <a href="#" class="read-more">Read More →</a>
-                    </div>
-                </article>
-
-                <!-- Post 2 -->
-                <article class="post-card">
-                    <div class="post-image" style="background: linear-gradient(135deg, #fffef9 0%, #f5f5f0 100%);"></div>
-                    <div class="post-content">
-                        <span class="post-date">March 12, 2026</span>
-                        <h3>Minimalist Chic: Ivory Essentials</h3>
-                        <p>Build your capsule wardrobe with timeless ivory pieces. Learn how to style these versatile staples for any occasion, from casual to formal events.</p>
-                        <a href="#" class="read-more">Read More →</a>
-                    </div>
-                </article>
-
-                <!-- Post 3 -->
-                <article class="post-card">
-                    <div class="post-image" style="background: linear-gradient(135deg, #800020 0%, #fffef9 100%);"></div>
-                    <div class="post-content">
-                        <span class="post-date">March 10, 2026</span>
-                        <h3>Luxury Pairing: Burgundy Meets Ivory</h3>
-                        <p>Master the art of combining two classic colors. This comprehensive guide shows you how to create stunning outfits by pairing burgundy and ivory pieces.</p>
-                        <a href="#" class="read-more">Read More →</a>
-                    </div>
-                </article>
-
-                <!-- Post 4 -->
-                <article class="post-card">
-                    <div class="post-image" style="background: linear-gradient(135deg, #a0003a 0%, #fffef9 100%);"></div>
-                    <div class="post-content">
-                        <span class="post-date">March 8, 2026</span>
-                        <h3>Accessories Review: Designer Picks</h3>
-                        <p>Our curated selection of luxury accessories that will elevate any wardrobe. Find out which pieces are worth the investment this season.</p>
-                        <a href="#" class="read-more">Read More →</a>
-                    </div>
-                </article>
-            </div>
+        <div class="hero-editorial-scroll-hint">
+            <span>Scroll</span>
+            <div class="hero-editorial-scroll-line"></div>
         </div>
     </section>
 
-    <!-- Gallery Section -->
-    <section id="gallery" class="gallery">
-        <div class="container">
-            <h2>Style Gallery</h2>
-            <div class="gallery-grid">
-                <div class="gallery-item" style="background: linear-gradient(135deg, #800020 0%, #400010 100%);"></div>
-                <div class="gallery-item" style="background: linear-gradient(135deg, #fffef9 0%, #fffaf0 100%);"></div>
-                <div class="gallery-item" style="background: linear-gradient(135deg, #c41e3a 0%, #800020 100%);"></div>
-                <div class="gallery-item" style="background: linear-gradient(135deg, #f5f5f0 0%, #fffef9 100%);"></div>
-                <div class="gallery-item" style="background: linear-gradient(135deg, #800020 0%, #fffef9 100%);"></div>
-                <div class="gallery-item" style="background: linear-gradient(135deg, #2a0010 0%, #a0003a 100%);"></div>
+    <!-- ═══════════════════════════════════════════
+         THE WIRE — SCROLLING TICKER
+         ═══════════════════════════════════════════ -->
+    {% if ticker_articles %}
+    <section class="news-ticker" style="background: var(--primary-dark);">
+        <div class="news-ticker-track">
+            <div class="news-ticker-scroll">
+                {% for article in ticker_articles %}
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-ticker-item">
+                    <span class="news-ticker-diamond">&#9670;</span>
+                    {{ article.title }}
+                </a>
+                {% endfor %}
+                <!-- duplicate for seamless loop -->
+                {% for article in ticker_articles %}
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-ticker-item">
+                    <span class="news-ticker-diamond">&#9670;</span>
+                    {{ article.title }}
+                </a>
+                {% endfor %}
             </div>
         </div>
     </section>
+    {% endif %}
 
-    <!-- About Section -->
+    <!-- ═══════════════════════════════════════════
+         THE DAILY EDIT — TOP POSTS
+         ═══════════════════════════════════════════ -->
+    {% if top_posts %}
+    <section class="editorial-section">
+        <div class="editorial-section-header">
+            <span class="editorial-label">The Daily Edit</span>
+            <h2>Latest from the Journal</h2>
+            <p>Fashion photography and editorial stories, freshly curated</p>
+        </div>
+
+        <div class="magazine-grid">
+            <!-- Lead / Feature post (large) -->
+            <div class="magazine-lead">
+                <a href="{{ url_for('blog_post', post_id=top_posts[0].id) }}" class="magazine-card magazine-card--large">
+                    {% if top_posts[0].image %}
+                        {% set cover = top_posts[0].image.split(',')[0]|trim %}
+                        <img src="{{ cover if 'http' in cover else url_for('static', filename='uploads/posts/' + cover) }}" alt="{{ top_posts[0].title }}" class="magazine-card-img">
+                    {% else %}
+                        <div class="magazine-card-placeholder"></div>
+                    {% endif %}
+                    <div class="magazine-card-overlay">
+                        <span class="magazine-card-date">{{ top_posts[0].created_at.strftime('%B %d, %Y') }}</span>
+                        <h3 class="magazine-card-title">{{ top_posts[0].title }}</h3>
+                        <span class="magazine-card-author">By {{ top_posts[0].author.first_name }}</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Side posts (stacked) -->
+            <div class="magazine-side">
+                {% for post in top_posts[1:] %}
+                <a href="{{ url_for('blog_post', post_id=post.id) }}" class="magazine-card magazine-card--side">
+                    {% if post.image %}
+                        {% set cover = post.image.split(',')[0]|trim %}
+                        <img src="{{ cover if 'http' in cover else url_for('static', filename='uploads/posts/' + cover) }}" alt="{{ post.title }}" class="magazine-card-img">
+                    {% else %}
+                        <div class="magazine-card-placeholder"></div>
+                    {% endif %}
+                    <div class="magazine-card-overlay">
+                        <span class="magazine-card-date">{{ post.created_at.strftime('%B %d, %Y') }}</span>
+                        <h3 class="magazine-card-title">{{ post.title }}</h3>
+                        <span class="magazine-card-author">By {{ post.author.first_name }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="{{ url_for('blog') }}" class="hero-editorial-cta" style="background: var(--primary);">View All Stories &rarr;</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════
+         BEHIND THE LENS — PHOTOGRAPHY TIPS
+         ═══════════════════════════════════════════ -->
+    {% if photography_tips %}
+    <section class="editorial-section editorial-section--dark">
+        <div class="editorial-section-header editorial-section-header--light">
+            <span class="editorial-label">Behind the Lens</span>
+            <h2>Photography Tips</h2>
+            <p>Expert techniques from our community of photographers</p>
+        </div>
+
+        <div class="masonry-gallery">
+            {% for tip in photography_tips %}
+            <a href="{{ url_for('tips_view', tip_id=tip.id) }}" class="masonry-item">
+                {% if tip.image %}
+                    <img src="{{ tip.image if 'http' in tip.image else url_for('static', filename='uploads/posts/' + tip.image) }}" alt="{{ tip.title }}">
+                {% endif %}
+                <div class="masonry-item-caption">
+                    <h4>{{ tip.title }}</h4>
+                    <span>{{ tip.author.first_name }} {{ tip.author.last_name }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="{{ url_for('tips', category='photography') }}" class="hero-editorial-cta">All Photography Tips &rarr;</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════
+         ABOUT / NEWSLETTER / CONTACT  (preserved)
+         ═══════════════════════════════════════════ -->
     <section id="about" class="about">
         <div class="container">
             <div class="about-content">
@@ -112,7 +171,6 @@
         </div>
     </section>
 
-    <!-- Newsletter Section -->
     <section class="newsletter">
         <div class="container">
             <h2>Stay Updated</h2>
@@ -124,7 +182,6 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
     <section id="contact" class="contact">
         <div class="container">
             <h2>Get In Touch</h2>
@@ -148,5 +205,4 @@
 
 {% block scripts %}
     {{ super() }}
-    <!-- Additional scripts if any can go here -->
 {% endblock %}
