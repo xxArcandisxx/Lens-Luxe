@@ -109,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(item);
     });
 });
-
 // ===========================
 // GALLERY LIGHTBOX (Optional Enhancement)
 // ===========================
@@ -165,61 +164,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// ===========================
-// SCROLL TO TOP BUTTON
-// ===========================
-
-function createScrollToTopButton() {
-    const button = document.createElement('button');
-    button.innerHTML = '↑';
-    button.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 50px;
-        height: 50px;
-        background-color: #800020;
-        color: #fffef9;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 24px;
-        display: none;
-        z-index: 999;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3);
-    `;
-    
-    document.body.appendChild(button);
-    
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > 300) {
-            button.style.display = 'flex';
-            button.style.alignItems = 'center';
-            button.style.justifyContent = 'center';
-        } else {
-            button.style.display = 'none';
-        }
-    });
-    
-    button.addEventListener('click', function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-    
-    button.addEventListener('mouseenter', function() {
-        this.style.backgroundColor = '#400010';
-        this.style.transform = 'scale(1.1)';
-    });
-    
-    button.addEventListener('mouseleave', function() {
-        this.style.backgroundColor = '#800020';
-        this.style.transform = 'scale(1)';
-    });
-}
-
-// Initialize scroll to top button
-document.addEventListener('DOMContentLoaded', createScrollToTopButton);
