@@ -243,10 +243,10 @@
                     buildInteractiveMap(currentUserLat, currentUserLon);
                 },
                 (error) => {
-                    console.warn("Hardware Geolocation failed. Launching background cloud IP lookup fallback routing...");
+                    console.warn("Hardware Geolocation failed. Trying IP-based fallback...");
                     fallbackToIPGeolocation();
                 },
-                { timeout: 10000, enableHighAccuracy: true }
+                { timeout: 5000, enableHighAccuracy: true }
             );
         } else {
             fallbackToIPGeolocation();
@@ -255,10 +255,10 @@
 
     async function fallbackToIPGeolocation() {
         const labelBadge = document.getElementById('activeLocationLabel');
-        labelBadge.textContent = "Analyzing network IP routing coordinates...";
+        labelBadge.textContent = "Loading location...";
 
         try {
-            const ipResponse = await fetch('https://ipapi.co/json/');
+            const ipResponse = await fetch('https://ipapi.co/json/', { timeout: 3000 });
             const ipData = await ipResponse.json();
 
             if (ipData && ipData.latitude && ipData.longitude) {
@@ -266,13 +266,13 @@
                 currentUserLon = parseFloat(ipData.longitude);
 
                 const cityIdentified = ipData.city || "Your Area";
-                labelBadge.textContent = `Network position resolved: ${cityIdentified} [${currentUserLat.toFixed(4)}, ${currentUserLon.toFixed(4)}]`;
+                labelBadge.textContent = `Location: ${cityIdentified} [${currentUserLat.toFixed(4)}, ${currentUserLon.toFixed(4)}]`;
                 buildInteractiveMap(currentUserLat, currentUserLon);
             } else {
                 useAbsoluteFallback();
             }
         } catch (err) {
-            console.error("IP Geolocation service timed out:", err);
+            console.error("IP lookup failed:", err);
             useAbsoluteFallback();
         }
     }
@@ -280,15 +280,18 @@
     function useAbsoluteFallback() {
         currentUserLat = 12.9716;
         currentUserLon = 77.5946;
-        document.getElementById('activeLocationLabel').textContent = "Network error. Defaulting scanning frame to Bengaluru Hub.";
+        document.getElementById('activeLocationLabel').textContent = "Using default location (Bengaluru). Click map to change.";
         buildInteractiveMap(currentUserLat, currentUserLon);
     }
 
     function buildInteractiveMap(lat, lon) {
+        console.log(`Building map at coordinates: ${lat}, ${lon}`);
+        
         const loadingBar = document.getElementById('mapLoadingBar');
         if (loadingBar) loadingBar.remove();
 
         if (!globalAppMap) {
+            console.log("Creating new Leaflet map");
             globalAppMap = L.map('leafletAppMap').setView([lat, lon], 13);
             mapMarkerGroup = L.layerGroup().addTo(globalAppMap);
 
@@ -299,6 +302,7 @@
             }).addTo(globalAppMap);
 
             globalAppMap.on('click', (e) => {
+                console.log("Map clicked at:", e.latlng.lat, e.latlng.lng);
                 currentUserLat = e.latlng.lat;
                 currentUserLon = e.latlng.lng;
                 document.getElementById('activeLocationLabel').textContent = `Custom pinned position center: [${currentUserLat.toFixed(4)}, ${currentUserLon.toFixed(4)}]`;
@@ -306,6 +310,7 @@
             });
 
         } else {
+            console.log("Reusing existing map, updating view");
             globalAppMap.setView([lat, lon], 13);
         }
 
@@ -327,24 +332,35 @@
 
     async function triggerManualGeocode() {
         const query = document.getElementById('manualLocationInput').value.trim();
-        if (!query) return;
+        if (!query) {
+            console.log("Location input is empty");
+            return;
+        }
 
         const labelBadge = document.getElementById('activeLocationLabel');
         labelBadge.textContent = `Searching for "${query}" via Nominatim...`;
+        console.log(`Manual location search for: ${query}`);
 
         try {
             const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+            console.log(`Fetching from: ${geoUrl}`);
+            
             const response = await fetch(geoUrl, {
                 headers: { 'User-Agent': 'LensAndLuxe/1.0' }
             });
             const data = await response.json();
+            
+            console.log("Nominatim response:", data);
 
             if (data && data.length > 0) {
                 currentUserLat = parseFloat(data[0].lat);
                 currentUserLon = parseFloat(data[0].lon);
+                console.log(`New coordinates: ${currentUserLat}, ${currentUserLon}`);
+                
                 labelBadge.textContent = `Map repositioned to: ${data[0].display_name.split(',')[0]} [${currentUserLat.toFixed(4)}, ${currentUserLon.toFixed(4)}]`;
                 buildInteractiveMap(currentUserLat, currentUserLon);
             } else {
+                console.warn(`No results found for: ${query}`);
                 labelBadge.textContent = `Could not find area coordinates for "${query}". Try again.`;
             }
         } catch (err) {
@@ -355,29 +371,44 @@
 
     async function queryNearbyBoutiques(lat, lon) {
         const endpoint = document.getElementById('endpoint-nearby-shops').value;
+        console.log(`Querying shops at: ${lat}, ${lon}`);
+        console.log(`Using endpoint: ${endpoint}`);
+        
         try {
+            const payload = {
+                lat: lat,
+                lon: lon,
+                radius: 6000,
+                category: activeQueryCategory
+            };
+            console.log("Sending payload:", payload);
+            
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lat: lat,
-                    lon: lon,
-                    radius: 6000,
-                    category: activeQueryCategory
-                })
+                body: JSON.stringify(payload)
             });
+            
+            console.log("Response status:", response.status, response.ok);
             const data = await response.json();
+            console.log("API Response:", data);
 
-            if (response.ok && data.shops) {
+            if (response.ok && data.shops !== undefined) {
                 currentDiscoveredShops = data.shops;
+                console.log(`Found ${data.shops.length} shops`);
                 const activeSearch = document.getElementById('textStoreSearch').value.trim();
+                // Always render, even if search is empty - will show all shops
                 renderDiscoveredShopsUI(activeSearch);
             } else {
-                showFallbackSidebarError();
+                // If API doesn't return shops, show appropriate message
+                console.warn("API error or no shops returned");
+                currentDiscoveredShops = [];
+                renderDiscoveredShopsUI('');
             }
         } catch (err) {
-            console.error(err);
-            showFallbackSidebarError();
+            console.error('Error fetching shops:', err);
+            currentDiscoveredShops = [];
+            renderDiscoveredShopsUI('');
         }
     }
 
@@ -391,62 +422,111 @@
 
         const normalizedFilter = filterText.toLowerCase().trim();
 
-        if (normalizedFilter === "") {
+        // Check if no shops exist in the vicinity at all
+        if (currentDiscoveredShops.length === 0) {
             countBadge.textContent = "0 Found";
             collectionBox.innerHTML = `
                     <div class="list-empty-state">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <p>Type a store name or a clothing style (e.g. "floral dresses") to discover nearby matches.</p>
+                        <i class="fa-solid fa-map"></i>
+                        <p><strong>No shops in vicinity</strong></p>
+                        <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">Try expanding the search radius or changing your location to find nearby fashion stores.</p>
                     </div>
                 `;
             return;
         }
 
-        // Upgraded Engine Filtering Logic
-        const filteredShops = currentDiscoveredShops.filter(shop => {
-            const shopName = shop.name.toLowerCase();
-            const shopType = shop.type.toLowerCase();
+        // Enhanced Filtering Logic with Category Routing
+        let filteredShops = currentDiscoveredShops;
 
-            // Route 1: Direct Match
-            if (shopName.includes(normalizedFilter) || shopType.includes(normalizedFilter)) {
-                shop.matchContext = 'direct';
-                return true;
-            }
-
-            // Route 2: Semantic Intent Match
+        if (normalizedFilter !== "") {
+            // Determine which category the search belongs to
+            let targetCategories = [];
+            
             for (const [category, keywords] of Object.entries(semanticStyleEngine)) {
-                // Check if the user's search string contains the keyword 
-                // (e.g., "floral dresses" contains "floral")
                 if (keywords.some(kw => normalizedFilter.includes(kw))) {
-
-                    // If it's a clothing or boutique keyword, accept ANY universal apparel tag from OpenStreetMap
-                    if (category === 'clothes' || category === 'boutique') {
-                        if (universalApparelTags.some(tag => shopType.includes(tag))) {
-                            shop.matchContext = 'semantic';
-                            return true;
-                        }
-                    } else {
-                        // For shoes/jewelry, check directly
-                        if (shopType.includes(category)) {
-                            shop.matchContext = 'semantic';
-                            return true;
-                        }
-                    }
+                    targetCategories.push(category);
                 }
             }
-            return false;
-        });
+
+            filteredShops = currentDiscoveredShops.filter(shop => {
+                const shopName = shop.name.toLowerCase();
+                const shopType = shop.type.toLowerCase();
+
+                // Route 1: Direct name match (highest priority)
+                if (shopName.includes(normalizedFilter)) {
+                    shop.matchContext = 'direct';
+                    return true;
+                }
+
+                // Route 2: Filter by detected category
+                if (targetCategories.length > 0) {
+                    // For shoes and jewelry, match exact type
+                    if (targetCategories.includes('shoes') && shopType.includes('shoe')) {
+                        shop.matchContext = 'semantic';
+                        return true;
+                    }
+                    if (targetCategories.includes('jewelry') && shopType.includes('jewelry')) {
+                        shop.matchContext = 'semantic';
+                        return true;
+                    }
+                    
+                    // For clothes/boutique, match apparel stores
+                    if ((targetCategories.includes('clothes') || targetCategories.includes('boutique')) 
+                        && universalApparelTags.some(tag => shopType.includes(tag))) {
+                        shop.matchContext = 'semantic';
+                        return true;
+                    }
+                }
+
+                // Route 3: Type keyword match
+                if (shopType.includes(normalizedFilter)) {
+                    shop.matchContext = 'type-match';
+                    return true;
+                }
+
+                return false;
+            });
+
+            // If no results, show all shops in the category with a note
+            if (filteredShops.length === 0 && targetCategories.length > 0) {
+                const categoryShops = currentDiscoveredShops.filter(shop => {
+                    const shopType = shop.type.toLowerCase();
+                    if (targetCategories.includes('shoes') && shopType.includes('shoe')) return true;
+                    if (targetCategories.includes('jewelry') && shopType.includes('jewelry')) return true;
+                    if ((targetCategories.includes('clothes') || targetCategories.includes('boutique')) 
+                        && universalApparelTags.some(tag => shopType.includes(tag))) return true;
+                    return false;
+                });
+                if (categoryShops.length > 0) {
+                    filteredShops = categoryShops.slice(0, 5); // Show up to 5 shops
+                }
+            }
+        }
 
         countBadge.textContent = `${filteredShops.length} Found`;
 
         if (filteredShops.length === 0) {
-            collectionBox.innerHTML = `
-                    <div class="list-empty-state">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <p>No matching stores or styles found for "${filterText}" in this area.</p>
-                    </div>
-                `;
-            return;
+            if (normalizedFilter !== "") {
+                // User searched but no exact matches - show all available shops instead
+                collectionBox.innerHTML = `
+                        <div class="list-empty-state">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <p><strong>No exact match for "${filterText}"</strong></p>
+                            <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">Showing all nearby fashion stores instead. Use shop type filters like "shoes", "boutique", or "clothing" for better results.</p>
+                        </div>
+                    `;
+                // Display all available shops
+                filteredShops = currentDiscoveredShops;
+                countBadge.textContent = `${filteredShops.length} Available`;
+            } else {
+                collectionBox.innerHTML = `
+                        <div class="list-empty-state">
+                            <i class="fa-solid fa-map"></i>
+                            <p>No fashion stores found in this area.</p>
+                        </div>
+                    `;
+                return;
+            }
         }
 
         filteredShops.forEach(shop => {
@@ -562,10 +642,6 @@
             triggerBtn.disabled = false;
             triggerBtn.innerHTML = originalMarkup;
         }
-    }
-
-    function showFallbackSidebarError() {
-        document.getElementById('sidebarListCollection').innerHTML = '<div class="list-empty-state"><i class="fa-solid fa-circle-exclamation"></i><p>Failed to parse map indexes. Showing offline directory assets.</p></div>';
     }
 </script>
 {% endblock %}

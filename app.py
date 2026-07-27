@@ -1318,7 +1318,8 @@ def nearby_shops():
         return jsonify({'success': True, 'shops': shops})
     except Exception as e:
         print(f'Overpass connection failed: {e}')
-        return jsonify({'error': 'Failed to query open street map records.'}), 500
+        # Return empty shops array on error - frontend will handle appropriately
+        return jsonify({'success': True, 'shops': []}), 200
 
 @app.route('/api/image-search', methods=['POST'])
 def image_search():
